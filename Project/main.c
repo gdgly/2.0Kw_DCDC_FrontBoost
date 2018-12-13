@@ -58,7 +58,7 @@ void main(void)
         {
             rxFinish = 0;
             
-            if (rxData == 0x0A)
+            if (rxData == 0x5A)
             {
                 ledLightToggle_LL();
                 usartSendData_LL(rxData);

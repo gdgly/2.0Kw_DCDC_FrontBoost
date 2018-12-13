@@ -25,7 +25,7 @@ void usartConfig_LL(void)
 #endif
     
 #if (USART_TX_INT_ENABLE == 1)
-    UART2_ITConfig(UART2_IT_TC, ENABLE);
+    UART2_ITConfig(UART2_IT_TXE, ENABLE);
 #endif
     
     UART2_Cmd(ENABLE);
@@ -41,7 +41,7 @@ void usartSendData_LL(uint8_t data)
     UART2_SendData8(data);
     
 #if (USART_TX_INT_ENABLE == 0)
-    while (UART2_GetFlagStatus(UART2_FLAG_TC) == RESET){;}
+    while (UART2_GetFlagStatus(UART2_FLAG_TXE) == RESET){;}
 #endif
 }
 
