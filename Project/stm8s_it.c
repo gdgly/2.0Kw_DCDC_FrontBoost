@@ -399,9 +399,12 @@ INTERRUPT_HANDLER(I2C_IRQHandler, 19)
     /* In order to detect unexpected events during development,
        it is recommended to set a breakpoint on the following instruction.
     */
+    enterInterruptIsr_Callback(20);
+    
+    usartTxIRQ_Callback();
+    
+    exitInterruptIsr_Callback();
 }
-extern volatile uint8_t rxData;
-extern volatile uint8_t rxFinish;
 
 /**
   * @brief  UART2 RX interrupt routine.
@@ -415,12 +418,7 @@ extern volatile uint8_t rxFinish;
     */
     enterInterruptIsr_Callback(21);
     
-    if ((UART2_GetITStatus(UART2_IT_RXNE) == SET) || \
-        (UART2_GetITStatus(UART2_IT_OR) == SET))
-    {
-        rxData = usartReceiveData_LL();
-        if (rxFinish == 0)rxFinish = 1;
-    }
+    usartRxIRQ_Callback();
     
     exitInterruptIsr_Callback();
 }
@@ -510,7 +508,7 @@ INTERRUPT_HANDLER(TIM6_UPD_OVF_TRG_IRQHandler, 23)
         TIM4_ClearITPendingBit(TIM4_IT_UPDATE);
         timTick_Decrement();
         uwTick_Increment();
-//        ledLightDisplay();
+        ledLightDisplay();
     }
     
     exitInterruptIsr_Callback();

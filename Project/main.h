@@ -36,7 +36,8 @@
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 #define  WATCHDOG_ENABLE    (0)
-
+#define  ENTER_CRITICAL()   disableInterrupts()
+#define  EXIT_CRITICAL()    enableInterrupts()
 /* Public function prototypes -----------------------------------------------*/
 
 

@@ -1,11 +1,11 @@
 
 #include "clock.h"
 
-/**
-  * @brief 
-  * @param None
-  * @retval None
-  */
+/*
+ * @函数功能：硬件系统时钟初始化.注意：该函数用于配置系统各时钟源和频率,需要在main函数第一步调用.
+ * @函数参数：无
+ * @返回值：无
+ */
 void systemClockInit_LL(void)
 {
     CLK_DeInit();

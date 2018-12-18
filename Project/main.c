@@ -26,18 +26,15 @@
   */ 
 
 /* Includes ------------------------------------------------------------------*/
+#include <string.h>
 #include "main.h"
 #include "clock.h"
 #include "timtick.h"
 #include "ledlight.h"
 #include "usart.h"
+#include "tim1PwmCtrl.h"
+#include "comm.h"
 
-/* Private typedef -----------------------------------------------------------*/
-/* Private define ------------------------------------------------------------*/
-/* Private function prototypes -----------------------------------------------*/
-/* Private functions ---------------------------------------------------------*/
-volatile uint8_t rxData   = 0;
-volatile uint8_t rxFinish = 0;
 /*
  * @函数功能：系统上电启动后的主函数
  * @函数参数：无
@@ -49,23 +46,14 @@ void main(void)
     systemTimTickInit_LL();
     ledLightInit_LL();
     usartConfig_LL();
+    timer1PwmControlInit_LL();
     
     enableInterrupts();
     
 	while (1)
 	{
-        if (rxFinish == 1)
-        {
-            rxFinish = 0;
-            
-            if (rxData == 0x5A)
-            {
-                ledLightToggle_LL();
-                usartSendData_LL(rxData);
-                rxData = 0;
-            }
-        }
-	}
+        commReceivedFrameParsing();
+    }
 }
 
 

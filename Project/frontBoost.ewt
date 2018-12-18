@@ -2134,10 +2134,22 @@
         <name>$PROJ_DIR$\..\Users\Inc\clock.h</name>
       </file>
       <file>
+        <name>$PROJ_DIR$\..\Users\Inc\comm.h</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\Users\Inc\Crc16.h</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\Users\Inc\escf.h</name>
+      </file>
+      <file>
         <name>$PROJ_DIR$\..\Users\Inc\ledlight.h</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\Users\Inc\systemStatus.h</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\Users\Inc\tim1PwmCtrl.h</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\Users\Inc\timtick.h</name>
@@ -2152,10 +2164,22 @@
         <name>$PROJ_DIR$\..\Users\Src\clock.c</name>
       </file>
       <file>
+        <name>$PROJ_DIR$\..\Users\Src\comm.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\Users\Src\Crc16.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\Users\Src\escf.c</name>
+      </file>
+      <file>
         <name>$PROJ_DIR$\..\Users\Src\ledlight.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\Users\Src\systemStatus.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\Users\Src\tim1PwmCtrl.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\Users\Src\timtick.c</name>
