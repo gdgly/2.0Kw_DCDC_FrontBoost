@@ -1802,6 +1802,9 @@
     <group>
       <name>inc</name>
       <file>
+        <name>$PROJ_DIR$\..\Users\Inc\adcTemp.h</name>
+      </file>
+      <file>
         <name>$PROJ_DIR$\..\Users\Inc\clock.h</name>
       </file>
       <file>
@@ -1814,6 +1817,9 @@
         <name>$PROJ_DIR$\..\Users\Inc\escf.h</name>
       </file>
       <file>
+        <name>$PROJ_DIR$\..\Users\Inc\ioctrl.h</name>
+      </file>
+      <file>
         <name>$PROJ_DIR$\..\Users\Inc\ledlight.h</name>
       </file>
       <file>
@@ -1823,14 +1829,20 @@
         <name>$PROJ_DIR$\..\Users\Inc\tim1PwmCtrl.h</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\Users\Inc\timtick.h</name>
+        <name>$PROJ_DIR$\..\Users\Inc\tim4tick.h</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\Users\Inc\usart.h</name>
       </file>
+      <file>
+        <name>$PROJ_DIR$\..\Users\Inc\voltRegulate.h</name>
+      </file>
     </group>
     <group>
       <name>src</name>
+      <file>
+        <name>$PROJ_DIR$\..\Users\Src\adcTemp.c</name>
+      </file>
       <file>
         <name>$PROJ_DIR$\..\Users\Src\clock.c</name>
       </file>
@@ -1844,6 +1856,9 @@
         <name>$PROJ_DIR$\..\Users\Src\escf.c</name>
       </file>
       <file>
+        <name>$PROJ_DIR$\..\Users\Src\ioctrl.c</name>
+      </file>
+      <file>
         <name>$PROJ_DIR$\..\Users\Src\ledlight.c</name>
       </file>
       <file>
@@ -1853,10 +1868,13 @@
         <name>$PROJ_DIR$\..\Users\Src\tim1PwmCtrl.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\Users\Src\timtick.c</name>
+        <name>$PROJ_DIR$\..\Users\Src\tim4tick.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\Users\Src\usart.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\Users\Src\voltRegulate.c</name>
       </file>
     </group>
   </group>

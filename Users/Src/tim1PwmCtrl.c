@@ -5,7 +5,7 @@
 static float voltageDutyCycle = 0.0;
 
 /**
-  * @brief Timer1定时器的通道1的输出比较模式初始化.默认产生占空比为50%的PWM波形.
+  * @brief Timer1定时器的通道1的输出比较模式初始化.默认产生占空比为63.5%的PWM波形.
   * @param  无
   * @retval 无
   */
@@ -13,7 +13,7 @@ void timer1PwmControlInit_LL(void)
 {
     uint16_t voltChannelCCR;
     
-    voltageDutyCycle = 20.0;
+    voltageDutyCycle = 63.5;
     voltChannelCCR   = (uint16_t)(voltageDutyCycle * 10.0);
       
 #ifdef PWM_VOLTAGE_CHANNEL

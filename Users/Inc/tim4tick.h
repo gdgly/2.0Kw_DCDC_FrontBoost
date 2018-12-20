@@ -1,6 +1,6 @@
 
-#ifndef __TIMTICK_H
-#define __TIMTICK_H
+#ifndef __TIM4TICK_H
+#define __TIM4TICK_H
 
 #include "main.h"
 

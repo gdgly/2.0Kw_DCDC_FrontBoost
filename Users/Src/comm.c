@@ -32,7 +32,6 @@ void commReceivedFrameParsing(void)
             if (dataBufCrcCheck(esBuf, esLen) != 0) {
                 memcpy(&duty, &esBuf[1], sizeof(float));
                 configVoltageChannel_DutyCycle_LL(duty);                        /* 调用修改电压通道占空比输出底层驱动函数. */
-                
                 retVal = 0;
             } else {
                 retVal = 0xff;
@@ -42,9 +41,16 @@ void commReceivedFrameParsing(void)
             
             crc = crc16(esBuf, 2);
             memcpy(&esBuf[2], &crc, sizeof(uint16_t));
-            esLen =  2 + sizeof(uint16_t);
+            esLen = 2 + sizeof(uint16_t);
             
             Len = escfEncode(esBuf, esLen, Buf, sizeof(Buf));
+            Buf[Len + 1] = 0xF2;
+            for (uint8_t i = Len; i > 0; i--) {
+                Buf[i] = Buf[i - 1];
+            }
+            Buf[0] = 0xF1;
+            Len += 2;
+            
             usartCommSendData(Buf, Len);                                        /* 调用串口数据发送驱动函数. */
         }
     }

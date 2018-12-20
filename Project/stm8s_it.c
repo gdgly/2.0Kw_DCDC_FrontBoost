@@ -28,10 +28,10 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm8s_it.h"
 #include "main.h"
-#include "timtick.h"
+#include "tim4tick.h"
 #include "ledlight.h"
 #include "usart.h"
-
+#include "adcTemp.h"
     
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -471,10 +471,23 @@ INTERRUPT_HANDLER(I2C_IRQHandler, 19)
   */
  INTERRUPT_HANDLER(ADC1_IRQHandler, 22)
 {
-
     /* In order to detect unexpected events during development,
        it is recommended to set a breakpoint on the following instruction.
     */
+    uint16_t xdata;
+    
+    enterInterruptIsr_Callback(22);
+    
+    if (ADC1_GetITStatus(ADC1_IT_EOC) != RESET)
+    {
+        ADC1_ClearITPendingBit(ADC1_IT_EOC);
+        configAdcConvertCompleteEventFlag(TRUE);
+        
+        xdata = ADC1_GetConversionValue();
+        adcSampleRawdataBuf_Write(xdata);
+    }
+    
+    exitInterruptIsr_Callback();
 }
 #endif /*STM8S208 or STM8S207 or STM8AF52Ax or STM8AF62Ax */
 
@@ -509,6 +522,7 @@ INTERRUPT_HANDLER(TIM6_UPD_OVF_TRG_IRQHandler, 23)
         timTick_Decrement();
         uwTick_Increment();
         ledLightDisplay();
+        adcSampleConvertScan();
     }
     
     exitInterruptIsr_Callback();
