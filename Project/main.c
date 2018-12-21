@@ -36,7 +36,9 @@
 #include "comm.h"
 #include "voltRegulate.h"
 #include "ioctrl.h"
-#include "adcTemp.h"
+#include "adcSample.h"
+#include "tim2Scan.h"
+
 
 /*
  * @函数功能：系统上电启动后的主函数
@@ -50,7 +52,8 @@ void main(void)
     systemTimTickInit_LL();
     ledLightInit_LL();
     usartConfig_LL();
-    timer1PwmControlInit_LL();
+//    timer1PwmControlInit_LL();
+    tim2ScanInit_LL();
     adcBoostInputVoltChannelInit_LL();
     
     enableInterrupts();

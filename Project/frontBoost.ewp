@@ -83,7 +83,7 @@
         </option>
         <option>
           <name>GenStackSize</name>
-          <state>0x100</state>
+          <state>0x200</state>
         </option>
         <option>
           <name>GenHeapSize</name>
@@ -1802,7 +1802,7 @@
     <group>
       <name>inc</name>
       <file>
-        <name>$PROJ_DIR$\..\Users\Inc\adcTemp.h</name>
+        <name>$PROJ_DIR$\..\Users\Inc\adcSample.h</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\Users\Inc\clock.h</name>
@@ -1829,6 +1829,9 @@
         <name>$PROJ_DIR$\..\Users\Inc\tim1PwmCtrl.h</name>
       </file>
       <file>
+        <name>$PROJ_DIR$\..\Users\Inc\tim2Scan.h</name>
+      </file>
+      <file>
         <name>$PROJ_DIR$\..\Users\Inc\tim4tick.h</name>
       </file>
       <file>
@@ -1841,7 +1844,7 @@
     <group>
       <name>src</name>
       <file>
-        <name>$PROJ_DIR$\..\Users\Src\adcTemp.c</name>
+        <name>$PROJ_DIR$\..\Users\Src\adcSample.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\Users\Src\clock.c</name>
@@ -1866,6 +1869,9 @@
       </file>
       <file>
         <name>$PROJ_DIR$\..\Users\Src\tim1PwmCtrl.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\Users\Src\tim2Scan.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\Users\Src\tim4tick.c</name>

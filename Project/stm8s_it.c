@@ -31,7 +31,10 @@
 #include "tim4tick.h"
 #include "ledlight.h"
 #include "usart.h"
-#include "adcTemp.h"
+#include "adcSample.h"
+#include "tim2Scan.h"
+    
+    
     
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -307,6 +310,11 @@ INTERRUPT_HANDLER(TIM1_CAP_COM_IRQHandler, 12)
   /* In order to detect unexpected events during development,
      it is recommended to set a breakpoint on the following instruction.
   */
+    enterInterruptIsr_Callback(13);
+    
+    tim2UpdateCallback();
+    
+    exitInterruptIsr_Callback();
 }
 
 /**
@@ -481,10 +489,11 @@ INTERRUPT_HANDLER(I2C_IRQHandler, 19)
     if (ADC1_GetITStatus(ADC1_IT_EOC) != RESET)
     {
         ADC1_ClearITPendingBit(ADC1_IT_EOC);
-        configAdcConvertCompleteEventFlag(TRUE);
         
         xdata = ADC1_GetConversionValue();
-        adcSampleRawdataBuf_Write(xdata);
+        adcSampleRawdataBuff_Write(xdata);
+        
+        configADConvertCompleteMutexFlag(TRUE);
     }
     
     exitInterruptIsr_Callback();

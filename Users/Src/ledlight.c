@@ -51,27 +51,27 @@ void ledLightToggle_LL(void)
 void ledLightDisplay(void)
 {
     const uint16_t TIMEOUT = 200;
-    systemWorkingStatusDef_t sta;
+//    systemWorkingStatusDef_t sta;
     static uint16_t cnt = 0;
     
     if (getInterruptIsrVectorNumber() == 23)                     /* 系统当前被TIM4中断触发了吗? */
     {
-        sta = getSystemWorkingStatus();
+//        sta = getSystemWorkingStatus();
         
-        if (sta == Normal)
-        {
+//        if (sta == Normal)
+//        {
             cnt++;
             if (cnt >= TIMEOUT)
             {
                 cnt = 0;
                 ledLightToggle_LL();
             }
-        }
-        else if (sta == Fault)
-        {
-            cnt = 0;
-            ledLightOn_LL();
-        }
+//        }
+//        else if (sta == Fault)
+//        {
+//            cnt = 0;
+//            ledLightOn_LL();
+//        }
     }
 }
 

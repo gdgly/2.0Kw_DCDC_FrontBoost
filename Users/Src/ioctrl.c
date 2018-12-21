@@ -9,7 +9,7 @@
 void ioCtrlInit_LL(void)
 {
     GPIO_Init(RELAY_CTRL_PORT, RELAY_CTRL_PIN, GPIO_MODE_OUT_PP_LOW_FAST);        /* 上电默认关闭继电器输出. */
-    GPIO_Init(ANOLOG_CTRL_PORT, ANOLOG_CTRL_PIN, GPIO_MODE_OUT_PP_HIGH_FAST);     /* 上电默认禁止模拟主控芯片UC3843使能. */
+    GPIO_Init(ANOLOG_CTRL_PORT, ANOLOG_CTRL_PIN, GPIO_MODE_OUT_PP_HIGH_SLOW);     /* 上电默认禁止模拟主控芯片UC3843使能. */
 }
 
 /*

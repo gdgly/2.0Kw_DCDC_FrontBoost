@@ -1,6 +1,6 @@
 
-#ifndef  __SYSTEMSTATUS_H
-#define  __SYSTEMSTATUS_H
+#ifndef  __TIM2SCAN_H
+#define  __TIM2SCAN_H
 
 #ifdef __cplusplus
  extern "C" {
@@ -8,16 +8,13 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-   
 
-
-
-
-//systemWorkingStatusDef_t getSystemWorkingStatus(void);
-//void configSystemWorkingStatus(systemWorkingStatusDef_t data);
+void tim2ScanInit_LL(void);  
+void tim2UpdateCallback(void);
    
 #ifdef __cplusplus
 }
 #endif
 
 #endif
+

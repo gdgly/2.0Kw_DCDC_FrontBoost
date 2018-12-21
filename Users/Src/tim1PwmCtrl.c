@@ -2,19 +2,18 @@
 #include "tim1PwmCtrl.h"
 
 
-static float voltageDutyCycle = 0.0;
+static float voltageDutyCycle = 15.6;            /* 默认产生占空比为63.5%的PWM波形. */
 
 /**
-  * @brief Timer1定时器的通道1的输出比较模式初始化.默认产生占空比为63.5%的PWM波形.
-  * @param  无
-  * @retval 无
+  * @函数功能：Timer1定时器的通道1的输出比较模式初始化.
+  * @函数参数：无
+  * @返回值：无
   */
 void timer1PwmControlInit_LL(void)
 {
     uint16_t voltChannelCCR;
     
-    voltageDutyCycle = 63.5;
-    voltChannelCCR   = (uint16_t)(voltageDutyCycle * 10.0);
+    voltChannelCCR = (uint16_t)(voltageDutyCycle * 10.0);
       
 #ifdef PWM_VOLTAGE_CHANNEL
 #if (VOLTAGE_CH_IDLE_STATE == 0)
@@ -54,9 +53,9 @@ void timer1PwmControlInit_LL(void)
 }
 
 /**
-  * @brief 修改电压通道输出的PWM占空比.
-  * @param  dutyCycle,占空比
-  * @retval 无
+  * @函数功能：修改电压通道输出的PWM占空比.
+  * @函数参数：dutyCycle,占空比.该参数是一个浮点类型的数据.
+  * @返回值：无
   */
 void configVoltageChannel_DutyCycle_LL(float dutyCycle)
 {
@@ -66,3 +65,4 @@ void configVoltageChannel_DutyCycle_LL(float dutyCycle)
     
     TIM1_SetCompare1(ccr_val);
 }
+
