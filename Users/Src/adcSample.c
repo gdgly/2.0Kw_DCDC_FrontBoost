@@ -185,10 +185,11 @@ static float calculateSystemTemperature(uint16_t adcData)
     } 
     else 
     {
-        for (uint8_t i = 0; i < (sizeof(ntcTable) / sizeof(ntcTable[0])); i++)
+        for (uint8_t i = 0; i < (sizeof(ntcTable) / sizeof(ntcTable[0])); i++)// Rx < ntcTable[i].resistance
         {
-            if (((Rx < ntcTable[i].resistance) && (fabs(Rx - ntcTable[i].resistance) > 1e-6)) &&   // Rx > ntcTable[i].resistance
-                ((Rx > ntcTable[i+1].resistance) && (fabs(Rx - ntcTable[i+1].resistance) > 1e-6)))     // Rx < ntcTable[i+1].resistance      
+			/* Rx <= ntcTable[i].resistance && Rx > ntcTable[i+1].resistance  */
+            if ((((Rx < ntcTable[i].resistance) && (fabs(Rx - ntcTable[i].resistance) > 1e-6)) || (fabs(Rx - ntcTable[i].resistance) < 1e-6)) && \
+                ((Rx > ntcTable[i+1].resistance) && (fabs(Rx - ntcTable[i+1].resistance) > 1e-6)))         
             {
                 temp = ntcTable[i].tempResult;
                 break;
