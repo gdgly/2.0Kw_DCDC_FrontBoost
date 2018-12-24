@@ -56,3 +56,13 @@ void commReceivedFrameParsing(void)
     }
 }
 
+/*
+ * @函数功能：串口通信发送控制信息
+ * @函数参数：无
+ * @返回值：无
+ */
+void commSendCtrlInfo(void)
+{
+    
+}
+

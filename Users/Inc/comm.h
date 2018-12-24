@@ -13,7 +13,7 @@
    
    
 void commReceivedFrameParsing(void);
-
+void commSendCtrlInfo(void);
 
 #ifdef __cplusplus
 }

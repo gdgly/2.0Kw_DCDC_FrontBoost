@@ -39,7 +39,7 @@ static boostVoltParaDef_t boostPara =
     .outputVolt = 0.0,
 };
 
-static float systemTemperature;
+static int8_t systemTemperature;
 
 /* 采样对象标识器. 0,采集Boost输入电压信号; 1,采集Boost输出电压信号; 2,采集温度信号; -1,无效; */
 static int8_t sampleObjectMarker = 0;                                      
@@ -154,7 +154,7 @@ static float calculateBoostOutputVoltage(uint16_t adcData)
     
     Vsp = (adcRawdata / 1024.0) * 3.0;                      /* Vsp = (ADC Rawdata / 2^10) * Vref */
     
-    Vout = Vsp * 304.981;                                   /* Vout = Vsp * k */
+    Vout = Vsp * 312.11;                                   /* Vout = Vsp * k */
     
     return (Vout);
 }
@@ -164,10 +164,10 @@ static float calculateBoostOutputVoltage(uint16_t adcData)
  * @函数参数：
  * @返回值：
  */
-static float calculateSystemTemperature(uint16_t adcData)
+static int8_t calculateSystemTemperature(uint16_t adcData)
 {
     float Vsp, Rx;
-    int8_t temp;
+    int8_t temp = 0;
     float adcRawdata = (float)adcData;
     
     Vsp = (adcRawdata / 1024.0) * 3.0;
@@ -198,7 +198,6 @@ static float calculateSystemTemperature(uint16_t adcData)
         
         return (temp);
     }
-    
 }
 
 /*
@@ -274,7 +273,7 @@ void adcSampleGetResult(void)
     
     if (sampleFinishMutex == TRUE)                                              /* Polling采集结束互斥信号量.若Poll到了,则处理ADC采集的原始数据. */                      
     {
-        result = adcMovingFilter((uint16_t*)adcSampleRawDataBuf, 
+        result = adcMovingFilter((uint16_t*)adcSampleRawDataBuf,
                                   ADC_SAMPLE_RAWDATABUF_SIZE);                  /* 滑动滤波处理. */
         
         if (sampleObjectMarker == 0)                                            /* 当前ADC是采集Boost输入电压信号. */          

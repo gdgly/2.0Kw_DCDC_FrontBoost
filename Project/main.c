@@ -52,7 +52,7 @@ void main(void)
     systemTimTickInit_LL();
     ledLightInit_LL();
     usartConfig_LL();
-//    timer1PwmControlInit_LL();
+    timer1PwmControlInit_LL();
     tim2ScanInit_LL();
     adcBoostInputVoltChannelInit_LL();
     
@@ -61,6 +61,7 @@ void main(void)
 	while (1)
 	{
         adcSampleGetResult();
+        commSendCtrlInfo();
         commReceivedFrameParsing();
     }
 }
