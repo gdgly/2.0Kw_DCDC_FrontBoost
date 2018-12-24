@@ -4,6 +4,7 @@
 #include "ioctrl.h"
 #include "tim4tick.h"
 
+/* NTC温度传感器温度-阻值对应关系表. */
 static const ntcSensorParaDef_t ntcTable[166] = 
 {
   {-40, 1889.0}, {-39, 1757.0}, {-38, 1635.0},{-37, 1523.0},{-36, 1419.0},{-35, 1323.0},{-34, 1235.0},{-33, 1153.0},{-32, 1077.0},{-31, 1006.0},
@@ -28,10 +29,10 @@ static const ntcSensorParaDef_t ntcTable[166] =
 
 static volatile uint16_t adcSampleRawDataBuf[ADC_SAMPLE_RAWDATABUF_SIZE] = {0,0,0,0,0,0,0,0,0,0};
 static volatile uint8_t adcDataBufIndex = 0;
-static volatile bool sampleFinishMutex = FALSE;
-static volatile bool convertCompleteMutex = TRUE;
+static volatile bool sampleFinishMutex = FALSE;		/* 当前通道采集完成互斥量. */
+static volatile bool convertCompleteMutex = TRUE;	/* 当前通道转换完成互斥量. */
 
-static boostVoltParaDef_t boostPara = 
+static VoltParaDef_t boostPara = 
 {
     .inputSta   = UnderVoltage,
     .inputVolt  = 0.0,
@@ -39,12 +40,92 @@ static boostVoltParaDef_t boostPara =
     .outputVolt = 0.0,
 };
 
-static int8_t systemTemperature;
+/* 系统当前温度值. */
+static int8_t systemTemperature = 0;
 
-/* 采样对象标识器. 0,采集Boost输入电压信号; 1,采集Boost输出电压信号; 2,采集温度信号; -1,无效; */
-static int8_t sampleObjectMarker = 0;                                      
+/* 采样对象标识器. 0,采集输入电压信号; 1,采集输出电压信号; 2,采集温度信号; -1,无效; */
+static int8_t sampleObjectMarker = 0;     
+                                 
+/* 定时器扫描采集对象索引标识计数器. */
 static int8_t timerScanIndex = -1;
 
+
+
+
+/*
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
+ */
+void adcTempChannelInit_LL(void)
+{
+    GPIO_Init(GPIOF, GPIO_PIN_4, GPIO_MODE_IN_FL_NO_IT);
+    CLK_PeripheralClockConfig(CLK_PERIPHERAL_ADC, ENABLE);
+    
+    ADC1_DeInit();
+    ADC1_Init(ADC1_CONVERSIONMODE_SINGLE,
+              ADC1_CHANNEL_12,
+              ADC1_PRESSEL_FCPU_D8,
+              ADC1_EXTTRIG_TIM,
+              DISABLE, 
+              ADC1_ALIGN_RIGHT,
+              ADC1_SCHMITTTRIG_CHANNEL12,
+              DISABLE
+              );
+    
+    ADC1_ITConfig(ADC1_IT_EOCIE, ENABLE);                           /* 使能ADC转换完成中断. */
+    ADC1_Cmd(ENABLE);
+}
+
+/*
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
+ */
+void adcBoostInputVoltChannelInit_LL(void)
+{
+    GPIO_Init(GPIOB, GPIO_PIN_4, GPIO_MODE_IN_FL_NO_IT);
+    CLK_PeripheralClockConfig(CLK_PERIPHERAL_ADC, ENABLE);
+    
+    ADC1_DeInit();
+    ADC1_Init(ADC1_CONVERSIONMODE_SINGLE,
+              ADC1_CHANNEL_4,
+              ADC1_PRESSEL_FCPU_D8,
+              ADC1_EXTTRIG_TIM,
+              DISABLE, 
+              ADC1_ALIGN_RIGHT,
+              ADC1_SCHMITTTRIG_CHANNEL12,
+              DISABLE
+              );   
+    
+    ADC1_ITConfig(ADC1_IT_EOCIE, ENABLE);                           /* 使能ADC转换完成中断. */
+    ADC1_Cmd(ENABLE);
+}
+
+/*
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
+ */
+void adcBoostOutputVoltChannelInit_LL(void)
+{
+    GPIO_Init(GPIOB, GPIO_PIN_1, GPIO_MODE_IN_FL_NO_IT);
+    CLK_PeripheralClockConfig(CLK_PERIPHERAL_ADC, ENABLE);
+    
+    ADC1_DeInit();
+    ADC1_Init(ADC1_CONVERSIONMODE_SINGLE,
+              ADC1_CHANNEL_1,
+              ADC1_PRESSEL_FCPU_D8,
+              ADC1_EXTTRIG_TIM,
+              DISABLE, 
+              ADC1_ALIGN_RIGHT,
+              ADC1_SCHMITTTRIG_CHANNEL12,
+              DISABLE
+              );   
+    
+    ADC1_ITConfig(ADC1_IT_EOCIE, ENABLE);                           /* 使能ADC转换完成中断. */
+    ADC1_Cmd(ENABLE);   
+}
 
 /*
  * @函数功能：
@@ -60,7 +141,7 @@ void adcSampleRawdataBuff_Write(uint16_t data)
         if (adcDataBufIndex >= ADC_SAMPLE_RAWDATABUF_SIZE) 
         {
             adcDataBufIndex = 0;
-            sampleFinishMutex = TRUE;                           /* POST采集结束互斥信号量. */
+            sampleFinishMutex = TRUE;                           	/* POST采集结束互斥信号量. */
         }
     }
 }
@@ -106,13 +187,15 @@ uint16_t adcMovingFilter(uint16_t* pRawData, uint8_t len)
     maxVal = *pRawData;
     minVal = *pRawData;
     
-    for (i = 1; i < len; i++) {
+    for (i = 1; i < len; i++) 
+	{
         if (pRawData[i] > maxVal)maxVal = pRawData[i];
         if (pRawData[i] < minVal)minVal = pRawData[i];
     }
     
     sumVal = 0;
-    for (i = 0; i < len; i++) {
+    for (i = 0; i < len; i++) 
+	{
         sumVal += *pRawData;
         pRawData++;
     }
@@ -212,31 +295,47 @@ static void boostInputVoltageCompare(float volt)
     if ((volt < 200.0) && (fabs(volt - 200.0) > EPSINON))               /* 输入电压小于200V. */
     {
         boostPara.inputSta = UnderVoltage;                              /* Boost输入电压欠压. */
-        ioCtrlRelayClose_LL();                                          /* 关断DC输出. */
     }
     else if (((volt > 200.0) && (fabs(volt - 200.0) > EPSINON)) && \
              ((volt < 250.0) && (fabs(volt - 250.0) > EPSINON)))        /* 输入电压大于200V小于250V. */
     {
         boostPara.inputSta = ReductionPower;                            /* Boost输入电压降额,降功率输出. */
         ioCtrlRelayOpen_LL();
-        
-//        systemDelayms(200);
-//        ioCtrlAnologEnable_LL();
     }
     else if (((volt > 250.0) && (fabs(volt - 250.0) > EPSINON)) && \
              ((volt < 500.0) && (fabs(volt - 500.0) > EPSINON)))        /* 输入电压大于250V小于500V. */
     {
         boostPara.inputSta = FullPower;                                 /* Boost输入电压正常,满功率输出. */
         ioCtrlRelayOpen_LL();
-        
-//        systemDelayms(200);
-//        ioCtrlAnologEnable_LL();
     }
     else if ((volt > 500.0) && (fabs(volt - 500.0) > EPSINON))          /* 输入电压大于500V. */
     {
         boostPara.inputSta = OverVoltage;                               /* Boost输入电压过压. */
-        ioCtrlRelayClose_LL();                                          /* 关断DC输出. */
     }
+}
+
+/*
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
+ */
+static void boostOutputVoltageCompare(float volt)
+{
+	const float EPSINON = 1e-6;
+	
+	if ((volt < 470.0) && (fabs(volt - 470.0) > EPSINON))
+	{
+		boostPara.outputSta = UnderVoltage;
+	}
+	else if (((volt > 470.0) && (fabs(volt - 470.0) > EPSINON)) && \
+			((volt < 530.0) && (fabs(volt - 530.0) > EPSINON)))
+	{
+		boostPara.outputSta = FullPower;
+	}
+	else if ((volt > 530.0) && (fabs(volt - 530.0) > EPSINON))
+	{
+		boostPara.outputSta = OverVoltage;
+	}
 }
 
 /*
@@ -263,9 +362,9 @@ void adcSampleTriggerScan(void)
 }
 
 /*
- * @函数功能：
- * @函数参数：
- * @返回值：
+ * @函数功能：获取ADC采集结果数据
+ * @函数参数：无
+ * @返回值：无
  */
 void adcSampleGetResult(void)
 {
@@ -289,8 +388,7 @@ void adcSampleGetResult(void)
         else if (sampleObjectMarker == 1)                                       /* 当前ADC是采集Boost输出电压信号. */
         {
             boostPara.outputVolt = calculateBoostOutputVoltage(result);
-            
-            /* TODO: add code here to do... */
+            boostOutputVoltageCompare(boostPara.outputVolt);
             
             adcTempChannelInit_LL();
             timerScanIndex = 2;
@@ -310,82 +408,4 @@ void adcSampleGetResult(void)
         sampleFinishMutex = FALSE;                                              /* 释放采集结束互斥信号量. */
     }
 }
-
-/*
- * @函数功能：
- * @函数参数：
- * @返回值：
- */
-void adcTempChannelInit_LL(void)
-{
-    GPIO_Init(GPIOF, GPIO_PIN_4, GPIO_MODE_IN_FL_NO_IT);
-    CLK_PeripheralClockConfig(CLK_PERIPHERAL_ADC, ENABLE);
-    
-    ADC1_DeInit();
-    ADC1_Init(ADC1_CONVERSIONMODE_SINGLE,
-              ADC1_CHANNEL_12,
-              ADC1_PRESSEL_FCPU_D8,
-              ADC1_EXTTRIG_TIM,
-              DISABLE, 
-              ADC1_ALIGN_RIGHT,
-              ADC1_SCHMITTTRIG_CHANNEL12,
-              DISABLE
-              );
-    
-    ADC1_ITConfig(ADC1_IT_EOCIE, ENABLE);                           /* 使能ADC转换完成中断. */
-    ADC1_Cmd(ENABLE);
-}
-
-/*
- * @函数功能：
- * @函数参数：
- * @返回值：
- */
-void adcBoostInputVoltChannelInit_LL(void)
-{
-    GPIO_Init(GPIOB, GPIO_PIN_4, GPIO_MODE_IN_FL_NO_IT);
-    CLK_PeripheralClockConfig(CLK_PERIPHERAL_ADC, ENABLE);
-    
-    ADC1_DeInit();
-    ADC1_Init(ADC1_CONVERSIONMODE_SINGLE,
-              ADC1_CHANNEL_4,
-              ADC1_PRESSEL_FCPU_D8,
-              ADC1_EXTTRIG_TIM,
-              DISABLE, 
-              ADC1_ALIGN_RIGHT,
-              ADC1_SCHMITTTRIG_CHANNEL12,
-              DISABLE
-              );   
-    
-    ADC1_ITConfig(ADC1_IT_EOCIE, ENABLE);                           /* 使能ADC转换完成中断. */
-    ADC1_Cmd(ENABLE);
-}
-
-/*
- * @函数功能：
- * @函数参数：
- * @返回值：
- */
-void adcBoostOutputVoltChannelInit_LL(void)
-{
-    GPIO_Init(GPIOB, GPIO_PIN_1, GPIO_MODE_IN_FL_NO_IT);
-    CLK_PeripheralClockConfig(CLK_PERIPHERAL_ADC, ENABLE);
-    
-    ADC1_DeInit();
-    ADC1_Init(ADC1_CONVERSIONMODE_SINGLE,
-              ADC1_CHANNEL_1,
-              ADC1_PRESSEL_FCPU_D8,
-              ADC1_EXTTRIG_TIM,
-              DISABLE, 
-              ADC1_ALIGN_RIGHT,
-              ADC1_SCHMITTTRIG_CHANNEL12,
-              DISABLE
-              );   
-    
-    ADC1_ITConfig(ADC1_IT_EOCIE, ENABLE);                           /* 使能ADC转换完成中断. */
-    ADC1_Cmd(ENABLE);   
-}
-
-
-
 

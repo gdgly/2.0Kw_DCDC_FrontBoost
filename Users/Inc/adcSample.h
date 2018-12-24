@@ -9,6 +9,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
    
+#define  ADC_SAMPLE_RAWDATABUF_SIZE     (10)
+   
    
 typedef enum
 {
@@ -16,28 +18,23 @@ typedef enum
     ReductionPower = 1,                         /* Boost电压降额. */
     UnderVoltage = 2,                           /* Boost电压欠压. */
     OverVoltage = 3,                            /* Boost电压过压. */
-}boostVoltStatusDef_t;
+}VoltStatusDef_t;
 
 typedef struct
 {
-    boostVoltStatusDef_t inputSta;              /* Boost输入电压状态. */
+    VoltStatusDef_t inputSta;              		/* Boost输入电压状态. */
     float inputVolt;                            /* Boost输入电压. */
     
-    boostVoltStatusDef_t outputSta;             /* Boost输出电压状态. */
+    VoltStatusDef_t outputSta;             		/* Boost输出电压状态. */
     float outputVolt;                           /* Boost输出电压. */
-}boostVoltParaDef_t;
-
+}VoltParaDef_t;
 
 typedef struct
 {
-    int8_t tempResult;
-    float  resistance;
+    int8_t tempResult;							/* NTC温度传感器当前的温度值. */
+    float  resistance;							/* NTC温度传感器当前的电阻值. */
 }ntcSensorParaDef_t;
 
-
-
-   
-#define  ADC_SAMPLE_RAWDATABUF_SIZE     (10)
    
    
 void adcTempChannelInit_LL(void);

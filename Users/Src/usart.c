@@ -273,12 +273,12 @@ void usartRxIRQ_Callback(void)
     {
         rxData = usartReceiveData_LL();
         
-        if (rxData == 0xF1)                     /* 接收到"转义序列"的起始符. */
+        if (rxData == 0xF1)                     /* 接收到帧起始符. */
         {
             if (commSemMutex == 0)
             {
                 pUsartPara->pRxBuf[pUsartPara->rxFrameSize++] = rxData;
-                commSemMutex = 1;               /* post一个"开始接收"信号量,告知接收程序开始接收数据. */
+                commSemMutex = 1;               /* post"开始接收"信号量,告知接收程序开始接收数据. */
             }
         }
         else if (rxData == 0xF2)                /* 接收到"转义序列"的结束符. */
@@ -318,7 +318,7 @@ void usartRxIRQ_Callback(void)
             {
                 pUsartPara->pRxBuf[pUsartPara->rxFrameSize++] = rxData;
                 
-                if (pUsartPara->rxFrameSize > pUsartPara->rxBufferSize)
+                if (pUsartPara->rxFrameSize > pUsartPara->rxBufferSize)			/* 接收长度超限 */
                 {
                     pUsartPara->rxFrameSize = 0;
                     commSemMutex = 0;

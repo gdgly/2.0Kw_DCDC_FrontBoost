@@ -41,7 +41,7 @@
 
 
 /*
- * @函数功能：系统上电启动后的主函数
+ * @函数功能：系统上电启动后执行的主函数.
  * @函数参数：无
  * @返回值：无
  */
@@ -63,7 +63,6 @@ void main(void)
         adcSampleGetResult();
         commSendCtrlInfo();
         commReceivedFrameParsing();
-        systemDelayms(10);
     }
 }
 

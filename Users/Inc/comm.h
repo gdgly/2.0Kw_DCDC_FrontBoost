@@ -9,7 +9,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
    
-#define  REGULATE_VOLT_CMD      (0x01)
+#define  START_STOP_MACHINE_CMD	(0x13)
+#define  REGULATE_VOLT_CMD      (0x14)
    
    
 void commReceivedFrameParsing(void);

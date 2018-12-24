@@ -110,9 +110,10 @@ uint16_t crc16(uint8_t *puchMsg, uint16_t usDataLen)
 	  usDataLen: 数据长度
 返回参数: 1:CRC校验正确, 0: CRC校验错误
 **************************************************************************/
-uint8_t dataBufCrcCheck(uint8_t *pDataBuf, uint16_t usDataLen)
+uint8_t dataBufCrcCheck(uint8_t* pDataBuf, uint16_t usDataLen)
 {
-	uint16_t CrcCode1 = 0,CrcCode2 = 0;
+	uint16_t CrcCode1 = 0, CrcCode2 = 0;
+	
 	if(usDataLen < 2) return 0;
 
 	CrcCode1 = crc16(pDataBuf, (usDataLen - 2));
