@@ -63,6 +63,7 @@ void main(void)
         adcSampleGetResult();
         commSendCtrlInfo();
         commReceivedFrameParsing();
+        systemDelayms(10);
     }
 }
 
