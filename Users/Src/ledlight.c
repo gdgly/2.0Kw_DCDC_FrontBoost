@@ -2,6 +2,7 @@
 #include "ledlight.h"
 #include "systemStatus.h"
 #include "stm8s_it.h"
+#include "comm.h"
 
 /*
  * @函数功能：led灯控制IO口初始化并默认输出熄灭led灯.

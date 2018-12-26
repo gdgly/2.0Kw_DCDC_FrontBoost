@@ -2,7 +2,7 @@
 #include "tim1PwmCtrl.h"
 
 
-static float voltageDutyCycle = 15.6;            /* 默认产生占空比为63.5%的PWM波形. */
+static float voltageDutyCycle = 15.6;            /* 默认产生占空比为15.6%的PWM波形. */
 
 /**
   * @函数功能：Timer1定时器的通道1的输出比较模式初始化.

@@ -59,7 +59,7 @@ static int8_t sampleObjectMarker = 0;
 /* 定时器扫描采集对象索引标识计数器. */
 static int8_t timerScanIndex = -1;
 /* 定时器扫描周期.用于设置通道之间的采样间隔 T = period*5ms. */
-static uint16_t timerScanPeriod = 200;
+static uint16_t timerScanPeriod = 100;
 
 
 

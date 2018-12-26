@@ -23,6 +23,7 @@ static bool waitRespondTimeoutFlag = FALSE;
 
 
 
+
 /*
  * @函数功能：获取系统当前运行状态值.
  * @函数参数：无
@@ -71,7 +72,7 @@ void commReceivedFrameParsing(void)
 		if (esBuf[2] == FRAME_TYPE_SEND)										/* 接收到的数据帧是后级LLC控制部分主动发送的. */
 		{
 			if (esBuf[0] != esLen)error = 1;									/* 接收到的数据长度不正确. */
-			if (dataBufCrcCheck(esBuf, esLen) != 0)error = 1;					/* 接收到的数据CRC校验不正确. */
+			if (dataBufCrcCheck(esBuf, esLen) == 0)error = 1;					/* 接收到的数据CRC校验不正确. */
 			
 			if (esBuf[1] == REGULATE_VOLT_CMD)									/* 收到的是调节输出电压命令. */
 			{
@@ -181,7 +182,7 @@ void commSendSyetemInfo(void)
 			tim3TimeoutFunc_Start_LL(retryDelayTime);
 			transmitOrderCntSemaphore = -1;											/* 传输顺序计数信号量置为无效. */
 										
-			while ((Len == 0) && (waitRespondTimeoutFlag == FALSE))			/* 等待直到收到应答信号或者等待超时则退出. */
+			while ((Len == 0) && (waitRespondTimeoutFlag == FALSE))					/* 等待直到收到应答信号或者等待超时则退出. */
 			{
 				Len = usartCommReceiveData(Buf);
 				
@@ -209,42 +210,41 @@ void commSendSyetemInfo(void)
 				{
 					esBuf[i] = esBuf[i + 1];
 				}
-				esLen = esLen - 2;
+				esLen = esLen - 2;													/* "转义序列"解码完成. */
 				
 				error = 0;
 				
 				if (esBuf[2] != FRAME_TYPE_RESPOND)error = 1;
 				if (esBuf[0] != esLen)error = 1;									/* 接收到的数据长度不正确. */
-				if (dataBufCrcCheck(esBuf, esLen) != 0)error = 1;					/* 接收到的数据CRC校验不正确. */
+				if (dataBufCrcCheck(esBuf, esLen) == 0)error = 1;					/* 接收到的数据CRC校验不正确. */
 				if (esBuf[3] != 0)error = 1;										/* 应答帧有效位不等于0表示未妥收. */
 				if (esBuf[1] != SEND_INPUTVOLT_CMD)error = 1;
 				
-				if (error == 0)														/* 收到正确的应答数据帧. */
+				if (error == 0)														/* 收到正确的应答数据帧,通信正确. */
 				{
 					transmitOrderCntSemaphore = 1;									/* 准备发送下一个参数信息. */
 				}
-				else																/* 收到错误的应答数据帧. */
+				else																/* 收到错误的应答数据帧,通信错误. */
 				{
 					transmitOrderCntSemaphore = 0;
 					
-					configSystemInfoReadyFlag(FALSE);								/* 通信失败,将系统信息就绪标志位清除. */
+					configSystemInfoReadyFlag(FALSE);								
 					configSystemOutputVoltParaUpdateFlag(FALSE);
 					configSystemTemperatureParaUpdateFlag(FALSE);
 				}
 			}
-			else if (waitRespondTimeoutFlag == TRUE)								/* 等待应答帧超时,通信故障. */
+			else if (waitRespondTimeoutFlag == TRUE)								/* 等待应答帧超时,通信超时. */
 			{
 				transmitOrderCntSemaphore = 0;
 				
-				configSystemInfoReadyFlag(FALSE);									/* 通信失败,将系统信息就绪标志位清除. */
+				configSystemInfoReadyFlag(FALSE);									
 				configSystemOutputVoltParaUpdateFlag(FALSE);
 				configSystemTemperatureParaUpdateFlag(FALSE);
 			}
 
 			configSystemInputVoltParaUpdateFlag(FALSE);	
 		}
-		
-		if (transmitOrderCntSemaphore == 1)												
+        else if (transmitOrderCntSemaphore == 1)												
 		{
 			esLen = 0;
 			esBuf[esLen++] = 10;
@@ -281,7 +281,7 @@ void commSendSyetemInfo(void)
 			tim3TimeoutFunc_Start_LL(retryDelayTime);
 			transmitOrderCntSemaphore = -1;											/* 传输顺序计数信号量置为无效. */
 										
-			while ((Len == 0) && (waitRespondTimeoutFlag == FALSE))			/* 等待直到收到应答信号或者等待超时则退出. */
+			while ((Len == 0) && (waitRespondTimeoutFlag == FALSE))					/* 等待直到收到应答信号或者等待超时则退出. */
 			{
 				Len = usartCommReceiveData(Buf);
 				
@@ -315,36 +315,35 @@ void commSendSyetemInfo(void)
 				
 				if (esBuf[2] != FRAME_TYPE_RESPOND)error = 1;
 				if (esBuf[0] != esLen)error = 1;									/* 接收到的数据长度不正确. */
-				if (dataBufCrcCheck(esBuf, esLen) != 0)error = 1;					/* 接收到的数据CRC校验不正确. */
+				if (dataBufCrcCheck(esBuf, esLen) == 0)error = 1;					/* 接收到的数据CRC校验不正确. */
 				if (esBuf[3] != 0)error = 1;										/* 应答帧有效位不等于0表示未妥收. */
 				if (esBuf[1] != SEND_OUTPUTVOLT_CMD)error = 1;
 				
-				if (error == 0)														/* 收到正确的应答数据帧. */
+				if (error == 0)														/* 收到正确的应答数据帧,通信正确. */
 				{
 					transmitOrderCntSemaphore = 2;									/* 准备发送下一个参数信息. */
 				}
-				else																/* 收到错误的应答数据帧. */
+				else																/* 收到错误的应答数据帧,通信错误. */
 				{
 					transmitOrderCntSemaphore = 0;
 					
-					configSystemInfoReadyFlag(FALSE);								/* 通信失败,将系统信息就绪标志位清除. */
+					configSystemInfoReadyFlag(FALSE);								
 					configSystemInputVoltParaUpdateFlag(FALSE);
 					configSystemTemperatureParaUpdateFlag(FALSE);
 				}
 			}
-			else if (waitRespondTimeoutFlag == TRUE)								/* 等待应答帧超时,通信故障. */
+			else if (waitRespondTimeoutFlag == TRUE)								/* 等待应答帧超时,通信超时. */
 			{
 				transmitOrderCntSemaphore = 0;
 				
-				configSystemInfoReadyFlag(FALSE);									/* 通信失败,将系统信息就绪标志位清除. */
+				configSystemInfoReadyFlag(FALSE);									
 				configSystemInputVoltParaUpdateFlag(FALSE);
 				configSystemTemperatureParaUpdateFlag(FALSE);
 			}
 			
 			configSystemOutputVoltParaUpdateFlag(FALSE);	
 		}
-		
-		if (transmitOrderCntSemaphore == 2)						
+        else if (transmitOrderCntSemaphore == 2)						
 		{
 			esLen = 0;
 			esBuf[esLen++] = 6;
@@ -380,7 +379,7 @@ void commSendSyetemInfo(void)
 			tim3TimeoutFunc_Start_LL(retryDelayTime);
 			transmitOrderCntSemaphore = -1;											/* 传输顺序计数信号量置为无效. */
 										
-			while ((Len == 0) && (waitRespondTimeoutFlag == FALSE))			/* 等待直到收到应答信号或者等待超时则退出. */
+			while ((Len == 0) && (waitRespondTimeoutFlag == FALSE))					/* 等待直到收到应答信号或者等待超时则退出. */
 			{
 				Len = usartCommReceiveData(Buf);
 				
@@ -414,29 +413,32 @@ void commSendSyetemInfo(void)
 				
 				if (esBuf[2] != FRAME_TYPE_RESPOND)error = 1;
 				if (esBuf[0] != esLen)error = 1;									/* 接收到的数据长度不正确. */
-				if (dataBufCrcCheck(esBuf, esLen) != 0)error = 1;					/* 接收到的数据CRC校验不正确. */
+				if (dataBufCrcCheck(esBuf, esLen) == 0)error = 1;					/* 接收到的数据CRC校验不正确. */
 				if (esBuf[3] != 0)error = 1;										/* 应答帧有效位不等于0表示未妥收. */
 				if (esBuf[1] != SEND_TEMPERATURE_CMD)error = 1;
 				
-				if (error == 0)														/* 收到正确的应答数据帧. */
+				if (error == 0)														/* 收到正确的应答数据帧,通信正确. */
 				{
-					transmitOrderCntSemaphore = 0;	
+					transmitOrderCntSemaphore = 0;
+					
 					configSystemInfoReadyFlag(FALSE);
 					configSystemInputVoltParaUpdateFlag(FALSE);
 					configSystemOutputVoltParaUpdateFlag(FALSE);
 				}
-				else																/* 收到错误的应答数据帧. */
+				else																/* 收到错误的应答数据帧,通信错误. */
 				{
 					transmitOrderCntSemaphore = 0;
-					configSystemInfoReadyFlag(FALSE);								/* 通信失败,将系统信息就绪标志位清除. */
+					
+					configSystemInfoReadyFlag(FALSE);								
 					configSystemInputVoltParaUpdateFlag(FALSE);
 					configSystemOutputVoltParaUpdateFlag(FALSE);
 				}
 			}
-			else if (waitRespondTimeoutFlag == TRUE)								/* 等待应答帧超时,通信故障. */
+			else if (waitRespondTimeoutFlag == TRUE)								/* 等待应答帧超时,通信超时. */
 			{
 				transmitOrderCntSemaphore = 0;
-				configSystemInfoReadyFlag(FALSE);									/* 通信失败,将系统信息就绪标志位清除. */
+				
+				configSystemInfoReadyFlag(FALSE);									
 				configSystemInputVoltParaUpdateFlag(FALSE);
 				configSystemOutputVoltParaUpdateFlag(FALSE);
 			}

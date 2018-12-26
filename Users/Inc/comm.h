@@ -18,6 +18,7 @@
 #define  FRAME_TYPE_SEND		(0x00)
 #define  FRAME_TYPE_RESPOND		(0xFF)
    
+
    
 bool getSystemMachineStatus(void);
 void configSystemMachineStatus(bool sta);
