@@ -18,7 +18,7 @@
 #define  VOLTAGE_CH_PIN         (GPIO_PIN_1)
 
 
-void timer1PwmControlInit_LL(void);
+void tim1PwmControlInit_LL(void);
 void configVoltageChannel_DutyCycle_LL(float dutyCycle);
    
    

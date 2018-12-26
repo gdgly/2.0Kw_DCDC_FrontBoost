@@ -2161,6 +2161,9 @@
         <name>$PROJ_DIR$\..\Users\Inc\tim2Scan.h</name>
       </file>
       <file>
+        <name>$PROJ_DIR$\..\Users\Inc\tim3timeout.h</name>
+      </file>
+      <file>
         <name>$PROJ_DIR$\..\Users\Inc\tim4tick.h</name>
       </file>
       <file>
@@ -2201,6 +2204,9 @@
       </file>
       <file>
         <name>$PROJ_DIR$\..\Users\Src\tim2Scan.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\Users\Src\tim3Timeout.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\Users\Src\tim4tick.c</name>

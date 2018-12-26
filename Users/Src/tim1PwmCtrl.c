@@ -9,7 +9,7 @@ static float voltageDutyCycle = 15.6;            /* 默认产生占空比为63.5
   * @函数参数：无
   * @返回值：无
   */
-void timer1PwmControlInit_LL(void)
+void tim1PwmControlInit_LL(void)
 {
     uint16_t voltChannelCCR;
     

@@ -32,22 +32,34 @@ static volatile uint8_t adcDataBufIndex = 0;
 static volatile bool sampleFinishMutex = FALSE;		/* 当前通道采集完成互斥量. */
 static volatile bool convertCompleteMutex = TRUE;	/* 当前通道转换完成互斥量. */
 
+
+/* 系统当前输入以及输出电压参数. */
 static VoltParaDef_t boostPara = 
 {
-    .inputSta   = UnderVoltage,
-    .inputVolt  = 0.0,
-    .outputSta  = UnderVoltage,
-    .outputVolt = 0.0,
+	.inputUpdateFlag  = FALSE,
+    .inputSta     = UnderVoltage,
+    .inputVolt    = 0.0,
+	
+	.outputUpdateFlag = FALSE,
+    .outputSta    = UnderVoltage,
+    .outputVolt   = 0.0,
 };
 
 /* 系统当前温度值. */
-static int8_t systemTemperature = 0;
+static TemperatureParaDef_t systemTempPara = 
+{
+	.val = 0,
+	.valueUpdateFlag = FALSE,
+};
+
+static bool systemInfoReadyFlag = FALSE;
 
 /* 采样对象标识器. 0,采集输入电压信号; 1,采集输出电压信号; 2,采集温度信号; -1,无效; */
-static int8_t sampleObjectMarker = 0;     
-                                 
+static int8_t sampleObjectMarker = 0;                                 
 /* 定时器扫描采集对象索引标识计数器. */
 static int8_t timerScanIndex = -1;
+/* 定时器扫描周期.用于设置通道之间的采样间隔 T = period*5ms. */
+static uint16_t timerScanPeriod = 200;
 
 
 
@@ -132,18 +144,69 @@ void adcBoostOutputVoltChannelInit_LL(void)
  * @函数参数：
  * @返回值：
  */
-void adcSampleRawdataBuff_Write(uint16_t data)
+VoltParaDef_t* getSystemVoltageParaPtr(void)
 {
-    if (sampleFinishMutex == FALSE) 
-    {
-        adcSampleRawDataBuf[adcDataBufIndex++] = data;
-        
-        if (adcDataBufIndex >= ADC_SAMPLE_RAWDATABUF_SIZE) 
-        {
-            adcDataBufIndex = 0;
-            sampleFinishMutex = TRUE;                           	/* POST采集结束互斥信号量. */
-        }
-    }
+	return (&boostPara);
+}
+
+/*
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
+ */
+void configSystemInputVoltParaUpdateFlag(bool wdata)
+{
+	boostPara.inputUpdateFlag = wdata;
+}
+
+/*
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
+ */
+void configSystemOutputVoltParaUpdateFlag(bool wdata)
+{
+	boostPara.outputUpdateFlag = wdata;
+}
+
+/*
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
+ */
+TemperatureParaDef_t* getSystemTemperatureParaPtr(void)
+{
+	return (&systemTempPara);
+}
+
+/*
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
+ */
+void configSystemTemperatureParaUpdateFlag(bool wdata)
+{
+	systemTempPara.valueUpdateFlag = wdata;
+}
+
+/*
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
+ */
+bool getSystemInfoReadyFlag(void)
+{
+	return (systemInfoReadyFlag);
+}
+
+/*
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
+ */
+void configSystemInfoReadyFlag(bool wdata)
+{
+	systemInfoReadyFlag = wdata;
 }
 
 /*
@@ -154,23 +217,6 @@ void adcSampleRawdataBuff_Write(uint16_t data)
 void configADConvertCompleteMutexFlag(bool val)
 {
     convertCompleteMutex = val;
-}
-
-/*
- * @函数功能：
- * @函数参数：
- * @返回值：
- */
-void adcSampleConvertScan(void)
-{
-    if ((sampleObjectMarker >= 0) && (sampleObjectMarker <= 2))
-    {
-        if ((convertCompleteMutex == TRUE) && (sampleFinishMutex == FALSE))
-        {
-            ADC1_StartConversion();
-            convertCompleteMutex = FALSE;
-        }
-    }
 }
 
 /*
@@ -237,7 +283,7 @@ static float calculateBoostOutputVoltage(uint16_t adcData)
     
     Vsp = (adcRawdata / 1024.0) * 3.0;                      /* Vsp = (ADC Rawdata / 2^10) * Vref */
     
-    Vout = Vsp * 312.11;                                   /* Vout = Vsp * k */
+    Vout = Vsp * 312.11;                                    /* Vout = Vsp * k */
     
     return (Vout);
 }
@@ -288,30 +334,35 @@ static int8_t calculateSystemTemperature(uint16_t adcData)
  * @函数参数：
  * @返回值：
  */
-static void boostInputVoltageCompare(float volt)
+static VoltStatusDef_t boostInputVoltageCompare(float volt)
 {
     const float EPSINON = 1e-6;
+	VoltStatusDef_t status = UnderVoltage;
     
     if ((volt < 200.0) && (fabs(volt - 200.0) > EPSINON))               /* 输入电压小于200V. */
     {
-        boostPara.inputSta = UnderVoltage;                              /* Boost输入电压欠压. */
+		status = UnderVoltage;											/* 输入电压欠压. */                 
     }
     else if (((volt > 200.0) && (fabs(volt - 200.0) > EPSINON)) && \
              ((volt < 250.0) && (fabs(volt - 250.0) > EPSINON)))        /* 输入电压大于200V小于250V. */
     {
-        boostPara.inputSta = ReductionPower;                            /* Boost输入电压降额,降功率输出. */
+		status = ReductionPower;										/* 输入电压降额,降功率输出. */
+                   
         ioCtrlRelayOpen_LL();
     }
     else if (((volt > 250.0) && (fabs(volt - 250.0) > EPSINON)) && \
              ((volt < 500.0) && (fabs(volt - 500.0) > EPSINON)))        /* 输入电压大于250V小于500V. */
     {
-        boostPara.inputSta = FullPower;                                 /* Boost输入电压正常,满功率输出. */
+		status = FullPower;                                 			/* 输入电压正常,满功率输出. */
+                           
         ioCtrlRelayOpen_LL();
     }
     else if ((volt > 500.0) && (fabs(volt - 500.0) > EPSINON))          /* 输入电压大于500V. */
     {
-        boostPara.inputSta = OverVoltage;                               /* Boost输入电压过压. */
+		status = OverVoltage;                               			/* 输入电压过压. */         
     }
+	
+	return (status);
 }
 
 /*
@@ -319,23 +370,26 @@ static void boostInputVoltageCompare(float volt)
  * @函数参数：
  * @返回值：
  */
-static void boostOutputVoltageCompare(float volt)
+static VoltStatusDef_t boostOutputVoltageCompare(float volt)
 {
 	const float EPSINON = 1e-6;
+	VoltStatusDef_t status = UnderVoltage;
 	
 	if ((volt < 470.0) && (fabs(volt - 470.0) > EPSINON))
 	{
-		boostPara.outputSta = UnderVoltage;
+		status = UnderVoltage;
 	}
 	else if (((volt > 470.0) && (fabs(volt - 470.0) > EPSINON)) && \
 			((volt < 530.0) && (fabs(volt - 530.0) > EPSINON)))
 	{
-		boostPara.outputSta = FullPower;
+		status = FullPower;
 	}
 	else if ((volt > 530.0) && (fabs(volt - 530.0) > EPSINON))
 	{
-		boostPara.outputSta = OverVoltage;
+		status = OverVoltage;
 	}
+	
+	return (status);
 }
 
 /*
@@ -345,18 +399,53 @@ static void boostOutputVoltageCompare(float volt)
  */
 void adcSampleTriggerScan(void)
 {
-    const uint16_t PERIOD = 100;
     static uint16_t scanCnt = 0;
     
     if (timerScanIndex != -1)
     {
         scanCnt++;
-        if (scanCnt >= PERIOD)                  /* 5ms * 100 = 500ms. */
+        if (scanCnt >= timerScanPeriod)                  /* T = 5ms * timerScanPeriod */
         {
             scanCnt = 0;
             
             sampleObjectMarker = timerScanIndex;
             timerScanIndex = -1;
+        }
+    }
+}
+
+/*
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
+ */
+void adcSampleConvertScan(void)
+{
+    if ((sampleObjectMarker >= 0) && (sampleObjectMarker <= 2))
+    {
+        if ((convertCompleteMutex == TRUE) && (sampleFinishMutex == FALSE))
+        {
+            ADC1_StartConversion();
+            convertCompleteMutex = FALSE;
+        }
+    }
+}
+
+/*
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
+ */
+void adcSampleRawdataBuff_Write(uint16_t data)
+{
+    if (sampleFinishMutex == FALSE) 
+    {
+        adcSampleRawDataBuf[adcDataBufIndex++] = data;
+        
+        if (adcDataBufIndex >= ADC_SAMPLE_RAWDATABUF_SIZE) 
+        {
+            adcDataBufIndex = 0;
+            sampleFinishMutex = TRUE;                           	/* POST采集结束互斥信号量. */
         }
     }
 }
@@ -375,11 +464,15 @@ void adcSampleGetResult(void)
         result = adcMovingFilter((uint16_t*)adcSampleRawDataBuf,
                                   ADC_SAMPLE_RAWDATABUF_SIZE);                  /* 滑动滤波处理. */
         
-        if (sampleObjectMarker == 0)                                            /* 当前ADC是采集Boost输入电压信号. */          
+        if (sampleObjectMarker == 0)                                            /* 当前ADC是采集输入电压信号. */          
         {
-            boostPara.inputVolt = calculateBoostInputVoltage(result);
-            boostInputVoltageCompare(boostPara.inputVolt);
-
+			if (boostPara.inputUpdateFlag == FALSE)
+			{
+				boostPara.inputVolt = calculateBoostInputVoltage(result);
+				boostPara.inputSta  = boostInputVoltageCompare(boostPara.inputVolt);
+				boostPara.inputUpdateFlag = TRUE;								
+			}
+			
             adcBoostOutputVoltChannelInit_LL();
             timerScanIndex = 1;
             
@@ -387,9 +480,13 @@ void adcSampleGetResult(void)
         }
         else if (sampleObjectMarker == 1)                                       /* 当前ADC是采集Boost输出电压信号. */
         {
-            boostPara.outputVolt = calculateBoostOutputVoltage(result);
-            boostOutputVoltageCompare(boostPara.outputVolt);
-            
+			if (boostPara.outputUpdateFlag == FALSE)
+			{
+				boostPara.outputVolt = calculateBoostOutputVoltage(result);
+				boostPara.outputSta  = boostOutputVoltageCompare(boostPara.outputVolt);
+				boostPara.outputUpdateFlag = TRUE;
+			}
+			
             adcTempChannelInit_LL();
             timerScanIndex = 2;
             
@@ -397,8 +494,17 @@ void adcSampleGetResult(void)
         }
         else if (sampleObjectMarker == 2)                                       /* 当前ADC是采集温度信号. */
         {
-            systemTemperature = calculateSystemTemperature(result);
-            
+			if (systemTempPara.valueUpdateFlag == FALSE)
+			{
+				systemTempPara.val = calculateSystemTemperature(result);
+				systemTempPara.valueUpdateFlag = TRUE;
+			}
+			
+			if (systemInfoReadyFlag == FALSE)
+			{
+				systemInfoReadyFlag = TRUE;
+			}
+			
             adcBoostInputVoltChannelInit_LL();
             timerScanIndex = 0;
             

@@ -38,6 +38,7 @@
 #include "ioctrl.h"
 #include "adcSample.h"
 #include "tim2Scan.h"
+#include "tim3timeout.h"
 
 
 /*
@@ -52,8 +53,9 @@ void main(void)
     systemTimTickInit_LL();
     ledLightInit_LL();
     usartConfig_LL();
-    timer1PwmControlInit_LL();
+    tim1PwmControlInit_LL();
     tim2ScanInit_LL();
+	tim3TimeoutFuncConfig_LL();
     adcBoostInputVoltChannelInit_LL();
     
     enableInterrupts();
@@ -61,7 +63,7 @@ void main(void)
 	while (1)
 	{
         adcSampleGetResult();
-        commSendCtrlInfo();
+        commSendSyetemInfo();
         commReceivedFrameParsing();
     }
 }

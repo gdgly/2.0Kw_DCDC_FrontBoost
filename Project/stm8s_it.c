@@ -33,7 +33,9 @@
 #include "usart.h"
 #include "adcSample.h"
 #include "tim2Scan.h"
-    
+#include "tim3Timeout.h"
+#include "comm.h"
+
     
     
 /* Private typedef -----------------------------------------------------------*/
@@ -342,6 +344,18 @@ INTERRUPT_HANDLER(TIM1_CAP_COM_IRQHandler, 12)
   /* In order to detect unexpected events during development,
      it is recommended to set a breakpoint on the following instruction.
   */
+	enterInterruptIsr_Callback(15);
+	
+	if (TIM3_GetITStatus(TIM3_IT_UPDATE) == SET)
+	{
+		TIM3_ClearITPendingBit(TIM3_IT_UPDATE);
+		
+		tim3TimeoutFunc_Stop_LL();
+		
+		commTimeoutCallback();
+	}
+	
+	exitInterruptIsr_Callback();
 }
 
 /**
@@ -529,7 +543,6 @@ INTERRUPT_HANDLER(TIM6_UPD_OVF_TRG_IRQHandler, 23)
     {
         TIM4_ClearITPendingBit(TIM4_IT_UPDATE);
         timTick_Decrement();
-        uwTick_Increment();
         ledLightDisplay();
         adcSampleConvertScan();
     }
