@@ -65,6 +65,7 @@ void main(void)
         adcSampleGetResult();
         commSendSyetemInfo();
         commReceivedFrameParsing();
+		ioCtrlProcessing();
     }
 }
 

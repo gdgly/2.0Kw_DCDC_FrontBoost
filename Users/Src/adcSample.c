@@ -1,8 +1,11 @@
 
+#include <string.h>
 #include <math.h>
 #include "adcSample.h"
 #include "ioctrl.h"
 #include "tim4tick.h"
+#include "comm.h"
+
 
 /* NTC温度传感器温度-阻值对应关系表. */
 static const ntcSensorParaDef_t ntcTable[166] = 
@@ -33,7 +36,7 @@ static volatile bool sampleFinishMutex = FALSE;		/* 当前通道采集完成互�
 static volatile bool convertCompleteMutex = TRUE;	/* 当前通道转换完成互斥量. */
 
 
-/* 系统当前输入以及输出电压参数. */
+/* 系统当前输入以及输出电压. */
 static VoltParaDef_t boostPara = 
 {
 	.inputUpdateFlag  = FALSE,
@@ -52,14 +55,17 @@ static TemperatureParaDef_t systemTempPara =
 	.valueUpdateFlag = FALSE,
 };
 
+/* 系统电压和温度等参数信息就绪标志位. FALSE,未就绪; TRUE,就绪; */
 static bool systemInfoReadyFlag = FALSE;
 
 /* 采样对象标识器. 0,采集输入电压信号; 1,采集输出电压信号; 2,采集温度信号; -1,无效; */
-static int8_t sampleObjectMarker = 0;                                 
+static int8_t sampleObjectMarker = 0;      
+
 /* 定时器扫描采集对象索引标识计数器. */
 static int8_t timerScanIndex = -1;
+
 /* 定时器扫描周期.用于设置通道之间的采样间隔 T = period*5ms. */
-static uint16_t timerScanPeriod = 100;
+static uint16_t timerScanPeriod = 100;	/* 100*5 = 500ms */
 
 
 
@@ -278,12 +284,22 @@ static float calculateBoostInputVoltage(uint16_t adcData)
  */
 static float calculateBoostOutputVoltage(uint16_t adcData)
 {
+	bool status;
     float Vsp, Vout;
     float adcRawdata = (float)adcData;
     
     Vsp = (adcRawdata / 1024.0) * 3.0;                      /* Vsp = (ADC Rawdata / 2^10) * Vref */
-    
-    Vout = Vsp * 312.11;                                    /* Vout = Vsp * k */
+
+	status = getSystemMachineStatus();
+	
+	if (status == TRUE)										/* 开机状态. */
+	{
+		Vout = Vsp * 662.0;                                 /* Vout = Vsp * k */
+	}
+	else													/* 停机状态. */
+	{
+		Vout = Vsp * 326.0;                                 /* Vout = Vsp * k */
+	}
     
     return (Vout);
 }
@@ -432,9 +448,9 @@ void adcSampleConvertScan(void)
 }
 
 /*
- * @函数功能：
- * @函数参数：
- * @返回值：
+ * @函数功能：向ADC采集的原始数据缓冲区中装载采集的结果数据.注意：该函数是由ADC中断服务程序读出ADC转换结果后调用.
+ * @函数参数：data,本次ADC采集的原始数据.
+ * @返回值：无.
  */
 void adcSampleRawdataBuff_Write(uint16_t data)
 {
@@ -458,14 +474,19 @@ void adcSampleRawdataBuff_Write(uint16_t data)
 void adcSampleGetResult(void)
 {
     uint16_t result;
+	uint16_t adcRawDataBuffer[ADC_SAMPLE_RAWDATABUF_SIZE];
     
     if (sampleFinishMutex == TRUE)                                              /* Polling采集结束互斥信号量.若Poll到了,则处理ADC采集的原始数据. */                      
     {
-        result = adcMovingFilter((uint16_t*)adcSampleRawDataBuf,
-                                  ADC_SAMPLE_RAWDATABUF_SIZE);                  /* 滑动滤波处理. */
+    	memcpy(adcRawDataBuffer, (uint16_t*)adcSampleRawDataBuf, (ADC_SAMPLE_RAWDATABUF_SIZE * sizeof(uint16_t)));
+		memset((uint16_t*)adcSampleRawDataBuf, 0, (ADC_SAMPLE_RAWDATABUF_SIZE * sizeof(uint16_t)));
+		
+        result = adcMovingFilter(adcRawDataBuffer, ADC_SAMPLE_RAWDATABUF_SIZE); /* 滑动滤波处理. */
         
         if (sampleObjectMarker == 0)                                            /* 当前ADC是采集输入电压信号. */          
         {
+        	sampleObjectMarker = -1;                                            /* 采集对象标识器置为无效值. */ 
+			
 			if (boostPara.inputUpdateFlag == FALSE)
 			{
 				boostPara.inputVolt = calculateBoostInputVoltage(result);
@@ -474,12 +495,13 @@ void adcSampleGetResult(void)
 			}
 			
             adcBoostOutputVoltChannelInit_LL();
-            timerScanIndex = 1;
-            
-            sampleObjectMarker = -1;                                            /* 采集对象标识器置为无效值. */    
+            timerScanIndex  = 1;
+            adcDataBufIndex = 0;
         }
         else if (sampleObjectMarker == 1)                                       /* 当前ADC是采集Boost输出电压信号. */
         {
+        	sampleObjectMarker = -1;                                            /* 采集对象标识器置为无效值. */ 
+			
 			if (boostPara.outputUpdateFlag == FALSE)
 			{
 				boostPara.outputVolt = calculateBoostOutputVoltage(result);
@@ -488,12 +510,13 @@ void adcSampleGetResult(void)
 			}
 			
             adcTempChannelInit_LL();
-            timerScanIndex = 2;
-            
-            sampleObjectMarker = -1;                                            /* 采集对象标识器置为无效值. */ 
+            timerScanIndex  = 2;
+            adcDataBufIndex = 0;
         }
         else if (sampleObjectMarker == 2)                                       /* 当前ADC是采集温度信号. */
         {
+        	sampleObjectMarker = -1;                                            /* 采集对象标识器置为无效值. */ 
+			
 			if (systemTempPara.valueUpdateFlag == FALSE)
 			{
 				systemTempPara.val = calculateSystemTemperature(result);
@@ -506,9 +529,8 @@ void adcSampleGetResult(void)
 			}
 			
             adcBoostInputVoltChannelInit_LL();
-            timerScanIndex = 0;
-            
-            sampleObjectMarker = -1;                                            /* 采集对象标识器置为无效值. */ 
+            timerScanIndex  = 0;
+            adcDataBufIndex = 0;
         }
         
         sampleFinishMutex = FALSE;                                              /* 释放采集结束互斥信号量. */

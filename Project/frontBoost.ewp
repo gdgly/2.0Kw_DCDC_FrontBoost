@@ -229,7 +229,7 @@
         </option>
         <option>
           <name>CCDiagSuppress</name>
-          <state>Pa050,Pe940,Pe550</state>
+          <state>Pe940</state>
         </option>
         <option>
           <name>CCDiagRemark</name>
@@ -1832,7 +1832,7 @@
         <name>$PROJ_DIR$\..\Users\Inc\tim2Scan.h</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\Users\Inc\tim3timeout.h</name>
+        <name>$PROJ_DIR$\..\Users\Inc\tim3Timeout.h</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\Users\Inc\tim4tick.h</name>

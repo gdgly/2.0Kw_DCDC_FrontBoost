@@ -25,6 +25,7 @@ void ioCtrlAnologEnable_LL(void);
 void ioCtrlAnologDisable_LL(void);
 void ioCtrlPFCVS22Enable_LL(void);
 void ioCtrlPFCVS22Disable_LL(void);
+void ioCtrlProcessing(void);
 
 #ifdef __cplusplus
 }

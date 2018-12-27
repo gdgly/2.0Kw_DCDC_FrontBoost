@@ -1,5 +1,13 @@
 
 #include "ioctrl.h"
+#include "comm.h"
+#include "adcSample.h"
+#include "tim4tick.h"
+
+static bool relayStatus      = FALSE;
+static bool anologChipStatus = FALSE;
+static bool ncpChipStatus    = FALSE;
+
 
 /*
  * @函数功能：IO输入输出端口初始化
@@ -20,7 +28,11 @@ void ioCtrlInit_LL(void)
  */
 void ioCtrlRelayOpen_LL(void)
 {
-    GPIO_WriteHigh(RELAY_CTRL_PORT, RELAY_CTRL_PIN);
+	if (relayStatus == FALSE)
+	{
+    	GPIO_WriteHigh(RELAY_CTRL_PORT, RELAY_CTRL_PIN);
+		relayStatus = TRUE;
+	}
 }
 
 /*
@@ -30,7 +42,11 @@ void ioCtrlRelayOpen_LL(void)
  */
 void ioCtrlRelayClose_LL(void)
 {
-    GPIO_WriteLow(RELAY_CTRL_PORT, RELAY_CTRL_PIN);
+	if (relayStatus == TRUE)
+	{
+    	GPIO_WriteLow(RELAY_CTRL_PORT, RELAY_CTRL_PIN);
+		relayStatus = FALSE;
+	}
 }
 
 /*
@@ -40,7 +56,11 @@ void ioCtrlRelayClose_LL(void)
  */
 void ioCtrlAnologEnable_LL(void)
 {
-    GPIO_WriteLow(ANOLOG_CTRL_PORT, ANOLOG_CTRL_PIN);
+	if (anologChipStatus == FALSE)
+	{
+    	GPIO_WriteLow(ANOLOG_CTRL_PORT, ANOLOG_CTRL_PIN);
+		anologChipStatus = TRUE;
+	}
 }
 
 /*
@@ -50,7 +70,11 @@ void ioCtrlAnologEnable_LL(void)
  */
 void ioCtrlAnologDisable_LL(void)
 {
-    GPIO_WriteHigh(ANOLOG_CTRL_PORT, ANOLOG_CTRL_PIN);
+	if (anologChipStatus == TRUE)
+	{
+    	GPIO_WriteHigh(ANOLOG_CTRL_PORT, ANOLOG_CTRL_PIN);
+		anologChipStatus = FALSE;
+	}
 }
 
 /*
@@ -60,7 +84,11 @@ void ioCtrlAnologDisable_LL(void)
  */
 void ioCtrlPFCVS22Enable_LL(void)
 {
-	GPIO_WriteLow(PFCVS22_CTRL_PORT, PFCVS22_CTRL_PIN);
+	if (ncpChipStatus == FALSE)
+	{
+		GPIO_WriteLow(PFCVS22_CTRL_PORT, PFCVS22_CTRL_PIN);
+		ncpChipStatus = TRUE;
+	}
 }
 
 /*
@@ -70,9 +98,50 @@ void ioCtrlPFCVS22Enable_LL(void)
  */
 void ioCtrlPFCVS22Disable_LL(void)
 {
-	GPIO_WriteHigh(PFCVS22_CTRL_PORT, PFCVS22_CTRL_PIN);
+	if (ncpChipStatus == TRUE)
+	{
+		GPIO_WriteHigh(PFCVS22_CTRL_PORT, PFCVS22_CTRL_PIN);
+		ncpChipStatus = FALSE;
+	}
 }
 
+/*
+ * @函数功能：PFV芯片驱动使能关闭
+ * @函数参数：无
+ * @返回值：无
+ */
+void ioCtrlProcessing(void)
+{
+	VoltParaDef_t *pVoltPar = getSystemVoltageParaPtr();
+	
+	if (getSystemMachineStateChangeFlag() == TRUE)					/* 系统开关机状态有变化吗? */
+	{
+		if (getSystemMachineStatus() == TRUE)						/* 是开机吗? */
+		{
+			ioCtrlAnologEnable_LL();
+
+			if (pVoltPar->outputSta == FullPower)
+			{
+				ioCtrlPFCVS22Enable_LL();
+			}
+
+			if (ncpChipStatus == TRUE)
+			{
+				configSystemMachineStateChangeFlag(FALSE);
+			}
+		}
+		else														/* 是关机吗? */
+		{
+			ioCtrlPFCVS22Disable_LL();
+
+			systemDelayms(100);
+
+			ioCtrlAnologDisable_LL();
+
+			configSystemMachineStateChangeFlag(FALSE);
+		}
+	}
+}
 
 
 
