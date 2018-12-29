@@ -24,7 +24,7 @@ void tim2ScanInit_LL(void)
 }
 
 /*
- * @函数功能：定时器TIMER2更新中断回调函数.由TIMER2中断ISR调用.
+ * @函数功能：
  * @函数参数：无
  * @返回值：无
  */
@@ -34,7 +34,7 @@ void tim2UpdateCallback(void)
     {
         TIM2_ClearITPendingBit(TIM2_IT_UPDATE);
         
-        adcSampleTriggerScan();										/* 调用ADC采样周期触发扫描函数. */
+        adcSampleTriggerScan();
     }
 }
 

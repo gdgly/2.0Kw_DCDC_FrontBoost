@@ -2,7 +2,7 @@
 #include "tim3timeout.h"
 
 
-static uint8_t timeoutTimer3Status = 0;						/* TIMER3定时器激活状态指示器. */
+static uint8_t timeoutTimer3Status = 0;
 
 
 /*

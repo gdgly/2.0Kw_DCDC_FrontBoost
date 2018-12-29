@@ -29,12 +29,13 @@ void configSystemRelayOutputStatus(bool wdata);
 void ioCtrlInit_LL(void);
 void ioCtrlRelayOpen_LL(void);
 void ioCtrlRelayClose_LL(void);
-void ioCtrlBoostOutputEnable_LL(void);
-void ioCtrlBoostOutputDisable_LL(void);
-void ioCtrlLLCOutputEnable_LL(void);
-void ioCtrlLLCOutputDisable_LL(void);
+void ioCtrlAnologEnable_LL(void);
+void ioCtrlAnologDisable_LL(void);
+void ioCtrlPFCVS22Enable_LL(void);
+void ioCtrlPFCVS22Disable_LL(void);
 void ioCtrlProcessing(void);
 
+bool getNcpChipStatus(void);
 
 #ifdef __cplusplus
 }

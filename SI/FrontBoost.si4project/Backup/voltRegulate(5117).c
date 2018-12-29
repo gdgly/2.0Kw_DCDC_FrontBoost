@@ -4,8 +4,8 @@
 
 
 /*
- * @函数功能：输出电压调节.
- * @函数参数：inputVolt, 需要输出的电压值.
+ * @函数功能：
+ * @函数参数：
  * @返回值：无
  */
 void boostOutputVoltageRegulate(uint16_t inputVolt)

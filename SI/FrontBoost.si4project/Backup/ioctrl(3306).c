@@ -11,9 +11,9 @@ static bool relayStatus              = FALSE;		/* 继电器输出状态.FALSE,�
 
 
 /*
- * @函数功能：获取LLC输出使能状态.
+ * @函数功能：IO输入输出端口初始化
  * @函数参数：无
- * @返回值：TRUE, 后级LLC输出使能打开; FALSE, 后级LLC输出使能关闭;
+ * @返回值：无
  */
 bool getLLCOutputEnableStatus(void)
 {
@@ -21,8 +21,8 @@ bool getLLCOutputEnableStatus(void)
 }
 
 /*
- * @函数功能：改写LLC输出使能状态.
- * @函数参数：wdata, 待改写的状态值.可取值TRUE或者FALSE.
+ * @函数功能：IO输入输出端口初始化
+ * @函数参数：无
  * @返回值：无
  */
 
@@ -32,9 +32,9 @@ void configLLCOutputEnableStatus(bool wdata)
 }
 
 /*
- * @函数功能：获取当前Boost输出使能状态.
+ * @函数功能：IO输入输出端口初始化
  * @函数参数：无
- * @返回值：TRUE, Boost输出使能打开; FALSE, Boost输出使能关闭;
+ * @返回值：无
  */
 bool getBoostOutputEnableStatus(void)
 {
@@ -42,8 +42,8 @@ bool getBoostOutputEnableStatus(void)
 }
 
 /*
- * @函数功能：改写Boost输出使能状态.
- * @函数参数：wdata, 待改写的状态值.可取值TRUE或者FALSE.
+ * @函数功能：IO输入输出端口初始化
+ * @函数参数：无
  * @返回值：无
  */
 void configBoostOutputEnbaleStatus(bool wdata)
@@ -52,9 +52,9 @@ void configBoostOutputEnbaleStatus(bool wdata)
 }
 
 /*
- * @函数功能：获取当前继电器输出工作状态.
+ * @函数功能：IO输入输出端口初始化
  * @函数参数：无
- * @返回值：TRUE, 继电器处于开启状态; FALSE, 继电器处于关闭状态.
+ * @返回值：无
  */
 bool getSystemRelayOutputStatus(void)
 {
@@ -62,8 +62,8 @@ bool getSystemRelayOutputStatus(void)
 }
 
 /*
- * @函数功能：改写继电器输出状态.
- * @函数参数：wdata, 待改写的状态值.可取值TRUE或者FALSE.
+ * @函数功能：IO输入输出端口初始化
+ * @函数参数：无
  * @返回值：无
  */
 void configSystemRelayOutputStatus(bool wdata)
@@ -112,7 +112,7 @@ void ioCtrlRelayClose_LL(void)
 }
 
 /*
- * @函数功能：Boost输出驱动芯片使能打开.
+ * @函数功能：模拟芯片驱动使能打开
  * @函数参数：无
  * @返回值：无
  */
@@ -126,7 +126,7 @@ void ioCtrlBoostOutputEnable_LL(void)
 }
 
 /*
- * @函数功能：Boost输出驱动芯片使能关闭.
+ * @函数功能：模拟芯片驱动使能关闭
  * @函数参数：无
  * @返回值：无
  */
@@ -140,7 +140,7 @@ void ioCtrlBoostOutputDisable_LL(void)
 }
 
 /*
- * @函数功能：后级LLC驱动芯片NCP1397AC使能打开.
+ * @函数功能：NCP1397AC芯片驱动使能打开
  * @函数参数：无
  * @返回值：无
  */
@@ -154,7 +154,7 @@ void ioCtrlLLCOutputEnable_LL(void)
 }
 
 /*
- * @函数功能：后级LLC驱动芯片NCP1397AC使能关闭.
+ * @函数功能：NCP1397AC芯片驱动使能关闭
  * @函数参数：无
  * @返回值：无
  */
@@ -168,7 +168,7 @@ void ioCtrlLLCOutputDisable_LL(void)
 }
 
 /*
- * @函数功能：Boost输出和后级LLC输出实时检测控制.
+ * @函数功能：PFV芯片驱动使能关闭
  * @函数参数：无
  * @返回值：无
  */
@@ -200,7 +200,8 @@ void ioCtrlProcessing(void)
 			configSystemSwitchingChangeStatus(FALSE);				/* 系统开关机状态变化标志清除,等待直到下一次有新的变化. */
 		}
 	}
-	else															/* 开关机状态无变化,需要实时检测母线电压是否正常,若异常需要关闭LLC输出. */
+#if 0
+	else
 	{
 		if (getSystemCurrentSwitchingStatus() == TRUE)				/* 是开机态. */
 		{
@@ -210,6 +211,7 @@ void ioCtrlProcessing(void)
 			}
 		}
 	}
+#endif
 }
 
 

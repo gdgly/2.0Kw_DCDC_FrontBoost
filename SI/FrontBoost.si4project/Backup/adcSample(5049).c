@@ -31,13 +31,13 @@ static const ntcSensorParaDef_t ntcTable[166] =
 };
 
 
-static volatile uint16_t adcSampleRawDataBuf[ADC_SAMPLE_RAWDATABUF_SIZE] = {0,0,0,0,0,0,0,0,0,0};	/* adc采样原始数据缓冲区. */
-static volatile uint8_t adcDataBufIndex = 0;														/* adc采样写缓冲区指针偏移量. */
-static volatile bool sampleFinishMutex = FALSE;														/* 当前通道缓冲区采集完成互斥量. */
-static volatile bool convertCompleteMutex = TRUE;													/* 当前通道转换完成互斥量. */
+static volatile uint16_t adcSampleRawDataBuf[ADC_SAMPLE_RAWDATABUF_SIZE] = {0,0,0,0,0,0,0,0,0,0};
+static volatile uint8_t adcDataBufIndex = 0;
+static volatile bool sampleFinishMutex = FALSE;		/* 当前通道采集完成互斥量. */
+static volatile bool convertCompleteMutex = TRUE;	/* 当前通道转换完成互斥量. */
 
 
-/* 系统当前输入、输出电压以及温度信息. */
+/* 系统当前输入以及输出电压. */
 static SystemInfoParaDef_t systemInfo = 
 {
     .inputSta     = UnderVoltage,
@@ -66,11 +66,11 @@ static const uint16_t timerScanPeriod = 100;	/* 100*5 = 500ms */
 
 
 /*
- * @函数功能：adc温度采集通道初始化.
- * @函数参数：无
- * @返回值：无
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
  */
-static void adcTempChannelInit_LL(void)
+void adcTempChannelInit_LL(void)
 {
     GPIO_Init(GPIOF, GPIO_PIN_4, GPIO_MODE_IN_FL_NO_IT);
     CLK_PeripheralClockConfig(CLK_PERIPHERAL_ADC, ENABLE);
@@ -91,11 +91,11 @@ static void adcTempChannelInit_LL(void)
 }
 
 /*
- * @函数功能：adc输入电压采集通道初始化.
- * @函数参数：无
- * @返回值：无
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
  */
-static void adcBoostInputVoltChannelInit_LL(void)
+void adcBoostInputVoltChannelInit_LL(void)
 {
     GPIO_Init(GPIOB, GPIO_PIN_4, GPIO_MODE_IN_FL_NO_IT);
     CLK_PeripheralClockConfig(CLK_PERIPHERAL_ADC, ENABLE);
@@ -116,11 +116,11 @@ static void adcBoostInputVoltChannelInit_LL(void)
 }
 
 /*
- * @函数功能：adc输出电压采集通道初始化.
- * @函数参数：无
- * @返回值：无
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
  */
-static void adcBoostOutputVoltChannelInit_LL(void)
+void adcBoostOutputVoltChannelInit_LL(void)
 {
     GPIO_Init(GPIOB, GPIO_PIN_1, GPIO_MODE_IN_FL_NO_IT);
     CLK_PeripheralClockConfig(CLK_PERIPHERAL_ADC, ENABLE);
@@ -141,9 +141,9 @@ static void adcBoostOutputVoltChannelInit_LL(void)
 }
 
 /*
- * @函数功能：获取当前系统参数信息全局结构体变量指针.
- * @函数参数：无
- * @返回值：全局结构体变量指针.
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
  */
 SystemInfoParaDef_t* getSystemInfoParaPtr(void)
 {
@@ -151,9 +151,9 @@ SystemInfoParaDef_t* getSystemInfoParaPtr(void)
 }
 
 /*
- * @函数功能：获取当前系统参数信息就绪标志位.
- * @函数参数：无
- * @返回值：TRUE,系统参数信息数据就绪; FALSE, 系统参数信息数据未就绪;
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
  */
 bool getSystemInfoReadyFlag(void)
 {
@@ -161,9 +161,9 @@ bool getSystemInfoReadyFlag(void)
 }
 
 /*
- * @函数功能：改写系统参数信息数据就绪标志位.
- * @函数参数：wdata, 待改写的状态值.可取值TRUE和FALSE.
- * @返回值：无
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
  */
 void configSystemInfoReadyFlag(bool wdata)
 {
@@ -171,8 +171,8 @@ void configSystemInfoReadyFlag(bool wdata)
 }
 
 /*
- * @函数功能：改写当前通道ADC转换完成互斥标志位的值.
- * @函数参数：val, 待改写的值.可取值TRUE或FALSE.
+ * @函数功能：
+ * @函数参数：
  * @返回值：
  */
 void configADConvertCompleteMutexFlag(bool val)
@@ -181,9 +181,9 @@ void configADConvertCompleteMutexFlag(bool val)
 }
 
 /*
- * @函数功能：adc采样原始数据滑动滤波处理.
- * @函数参数：*pRawData, adc采样的原始数据缓冲区; len, adc采样的原始数据长度;
- * @返回值：经过滑动滤波处理后的ADC数据值.
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
  */
 static uint16_t adcMovingFilter(uint16_t* pRawData, uint8_t len)
 {
@@ -216,9 +216,9 @@ static uint16_t adcMovingFilter(uint16_t* pRawData, uint8_t len)
 }
 
 /*
- * @函数功能：将ADC采集到的输入电压原始数据经过计算得出实际的输入电压值.
- * @函数参数：adcData, 输入电压的ADC原始数据.
- * @返回值：实际的输入电压值.该数据是一个浮点型的数值,单位是V.
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
  */
 static float calculateBoostInputVoltage(uint16_t adcData)
 {
@@ -233,9 +233,9 @@ static float calculateBoostInputVoltage(uint16_t adcData)
 }
 
 /*
- * @函数功能：将ADC采集到的Boost输出电压原始数据经过计算得出实际的Boost输出电压值.
- * @函数参数：adcData, 输出电压的ADC原始数据.
- * @返回值：实际的输出电压值.该数据是一个浮点型的数值,单位是V.
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
  */
 static float calculateBoostOutputVoltage(uint16_t adcData)
 {
@@ -247,11 +247,11 @@ static float calculateBoostOutputVoltage(uint16_t adcData)
 
     status = getLLCOutputEnableStatus();					
 	
-	if (status == TRUE)										/* LLC输出是开启状态. */
+	if (status == TRUE)										/* boost输出是开启状态. */
 	{
 		Vout = Vsp * 308.0;                                 /* Vout = Vsp * k */
 	}
-	else													/* LLC输出是关闭状态. */
+	else													/* boost输出是关闭状态. */
 	{
 		Vout = Vsp * 662.0;                                 /* Vout = Vsp * k */
 	}
@@ -260,9 +260,9 @@ static float calculateBoostOutputVoltage(uint16_t adcData)
 }
 
 /*
- * @函数功能：将ADC采集到的温度原始数据经过计算得出实际的温度值.
- * @函数参数：adcData, 温度传感器的ADC原始数据.
- * @返回值：实际的温度值.该数据是一个有符号整型数值,单位是℃.
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
  */
 static int8_t calculateSystemTemperature(uint16_t adcData)
 {
@@ -301,9 +301,9 @@ static int8_t calculateSystemTemperature(uint16_t adcData)
 }
 
 /*
- * @函数功能：输入电压比较判断得出输入电压的状态.
- * @函数参数：volt, 当前的输入电压值.
- * @返回值：当前输入电压状态值.
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
  */
 static VoltStatusDef_t boostInputVoltageCompare(float volt)
 {
@@ -337,9 +337,9 @@ static VoltStatusDef_t boostInputVoltageCompare(float volt)
 }
 
 /*
- * @函数功能：输出电压比较判断
- * @函数参数：volt, 当前的输出电压值.
- * @返回值：输出电压状态值.
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
  */
 static VoltStatusDef_t boostOutputVoltageCompare(float volt)
 {
@@ -364,9 +364,9 @@ static VoltStatusDef_t boostOutputVoltageCompare(float volt)
 }
 
 /*
- * @函数功能：输入电压通道ADC采集初始化.
- * @函数参数：无
- * @返回值：无
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
  */
 void adcSampleInputVolt_Init(void)
 {
@@ -378,9 +378,9 @@ void adcSampleInputVolt_Init(void)
 }
 
 /*
- * @函数功能：输出电压通道ADC采集初始化.
- * @函数参数：无
- * @返回值：无
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
  */
 void adcSampleOutputVolt_Init(void)
 {
@@ -392,9 +392,9 @@ void adcSampleOutputVolt_Init(void)
 }
 
 /*
- * @函数功能：温度通道ADC采集初始化.
- * @函数参数：无
- * @返回值：无
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
  */
 void adcSampleSystemTemperature_Init(void)
 {
@@ -408,9 +408,9 @@ void adcSampleSystemTemperature_Init(void)
 
 
 /*
- * @函数功能：adc采样触发扫描.由定时中断ISR周期调用,用于周期性地触发ADC采样.
- * @函数参数：无
- * @返回值：无
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
  */
 void adcSampleTriggerScan(void)
 {
@@ -430,9 +430,9 @@ void adcSampleTriggerScan(void)
 }
 
 /*
- * @函数功能：ADC采样启动转换.
- * @函数参数：无
- * @返回值：无
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
  */
 void adcSampleConvertScan(void)
 {

@@ -28,7 +28,7 @@ static USART_ParaTypeDef usartTransmitPara =
 
 
 /*
- * @函数功能：串口通信配置初始化.
+ * @函数功能：串口1配置初始化.
  * @函数参数：无
  * @返回值：无
  */

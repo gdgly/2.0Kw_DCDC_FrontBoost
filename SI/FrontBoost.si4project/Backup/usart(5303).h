@@ -10,15 +10,14 @@
 #include "main.h"
    
 #define  USART_RX_INT_ENABLE    (1)             /* 串口接收中断使能 */
-#define  USART_TX_INT_ENABLE    (0)             /* 串口发送中断不使能. */
+#define  USART_TX_INT_ENABLE    (0)             /* 串口发送中断使能 */
    
 #define  USART_TX_BUF_SIZE      (18)
 #define  USART_RX_BUF_SIZE      (18)
 #define  USART_RX_MSG_SIZE      (3)
    
 #define  USARTCOMM_VALID_FRAME_SIZE (6)         /* 串口通信每帧数据的最低有效长度 */
-
-
+   
 typedef struct
 {
     uint8_t* pTxBuf;
@@ -35,7 +34,7 @@ typedef struct
     volatile uint16_t rxWritePtr;
     volatile uint16_t rxReadPtr;
     volatile uint16_t rxCount;
-    volatile uint16_t rxFrameSize;
+    volatile uint16_t  rxFrameSize;
     
     void (*sendBeforeFunc)(void);
     void (*sendOverFunc)(void);

@@ -30,7 +30,7 @@ static uint8_t commTimeoutErrorCnt = 0;				/* 串口通信等待应答数据帧�
 
 
 /*
- * @函数功能：获取系统当前开关机运行状态值.
+ * @函数功能：获取系统当前运行状态值.
  * @函数参数：无
  * @返回值：系统当前运行状态值.
  */
@@ -40,7 +40,7 @@ bool getSystemCurrentSwitchingStatus(void)
 }
 
 /*
- * @函数功能：配置系统当前开关机运行状态值.
+ * @函数功能：配置系统当前运行状态值.
  * @函数参数：sta, 待配置的状态值.
  * @返回值：无
  */
@@ -50,9 +50,9 @@ void configSystemCurrentSwitchingStatus(bool sta)
 }
 
 /*
- * @函数功能：获取系统开关机改变状态值.
- * @函数参数：无
- * @返回值：系统当前开关机状态是否改变状态值.
+ * @函数功能：配置系统当前运行状态值.
+ * @函数参数：sta, 待配置的状态值.
+ * @返回值：无
  */
 bool getSystemSwitchingChangeStatus(void)
 {
@@ -60,7 +60,7 @@ bool getSystemSwitchingChangeStatus(void)
 }
 
 /*
- * @函数功能：配置系统当前开关机改变状态值.
+ * @函数功能：配置系统当前运行状态值.
  * @函数参数：sta, 待配置的状态值.
  * @返回值：无
  */
@@ -166,7 +166,7 @@ void commReceivedFrameParsing(void)
 }
 
 /*
- * @函数功能：前级Boost控制部分使用串口通信发送系统参数信息数据给后级LLC控制部分.
+ * @函数功能：串口通信发送系统参数信息.
  * @函数参数：无
  * @返回值：无
  */
