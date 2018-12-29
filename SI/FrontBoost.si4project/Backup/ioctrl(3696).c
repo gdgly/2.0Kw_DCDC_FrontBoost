@@ -200,18 +200,6 @@ void ioCtrlProcessing(void)
 			configSystemSwitchingChangeStatus(FALSE);				/* 系统开关机状态变化标志清除,等待直到下一次有新的变化. */
 		}
 	}
-#if 0
-	else
-	{
-		if (getSystemCurrentSwitchingStatus() == TRUE)				/* 是开机态. */
-		{
-			if (pInfoPar->outputSta != FullPower)
-			{
-				ioCtrlLLCOutputDisable_LL();						/* 关闭后级LLC输出. */
-			}
-		}
-	}
-#endif
 }
 
 

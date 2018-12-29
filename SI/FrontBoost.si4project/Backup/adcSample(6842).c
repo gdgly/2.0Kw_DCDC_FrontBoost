@@ -5,7 +5,6 @@
 #include "ioctrl.h"
 #include "tim4tick.h"
 #include "comm.h"
-#include "ioctrl.h"
 
 
 /* NTC温度传感器温度-阻值对应关系表. */
@@ -245,15 +244,15 @@ static float calculateBoostOutputVoltage(uint16_t adcData)
     
     Vsp = (adcRawdata / 1024.0) * 3.0;                      /* Vsp = (ADC Rawdata / 2^10) * Vref */
 
-    status = getLLCOutputEnableStatus();					
+	status = getSystemMachineStatus();
 	
-	if (status == TRUE)										/* boost输出是开启状态. */
-	{
-		Vout = Vsp * 308.0;                                 /* Vout = Vsp * k */
-	}
-	else													/* boost输出是关闭状态. */
+	if (status == TRUE)										/* 开机状态. */
 	{
 		Vout = Vsp * 662.0;                                 /* Vout = Vsp * k */
+	}
+	else													/* 停机状态. */
+	{
+		Vout = Vsp * 326.0;                                 /* Vout = Vsp * k */
 	}
     
     return (Vout);

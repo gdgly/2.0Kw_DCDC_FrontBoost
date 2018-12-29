@@ -11,9 +11,9 @@
 
 
 
-static bool systemCurSwitchingState    = FALSE;		/* 系统当前开机状态. FALSE,关机态; TRUE,开机态; */
-static bool systemPrevSwitchingState   = FALSE;		/* 系统前一次的开机状态. */
-static bool systemSwitchingChangeState = FALSE;		/* 系统开关机改变的状态. FALSE,状态无变化; TRUE,状态有变化; */
+static bool systemMachineOpenState 	   = FALSE;		/* 系统开机状态. FALSE,关机态; TRUE,开机态; */
+static bool prevSystemMachineOpenState = FALSE;
+static bool machineStateChangeFlag     = FALSE;
 
 static int8_t transmitOrderCntSemaphore = 0;		/* 串口发送命令帧顺序计数信号量. */
 
@@ -34,9 +34,9 @@ static uint8_t commTimeoutErrorCnt = 0;				/* 串口通信等待应答数据帧�
  * @函数参数：无
  * @返回值：系统当前运行状态值.
  */
-bool getSystemCurrentSwitchingStatus(void)
+bool getSystemMachineStatus(void)
 {
-	return (systemCurSwitchingState);
+	return (systemMachineOpenState);
 }
 
 /*
@@ -44,9 +44,9 @@ bool getSystemCurrentSwitchingStatus(void)
  * @函数参数：sta, 待配置的状态值.
  * @返回值：无
  */
-void configSystemCurrentSwitchingStatus(bool sta)
+void configSystemMachineStatus(bool sta)
 {
-	systemCurSwitchingState = sta;
+	systemMachineOpenState = sta;
 }
 
 /*
@@ -54,9 +54,9 @@ void configSystemCurrentSwitchingStatus(bool sta)
  * @函数参数：sta, 待配置的状态值.
  * @返回值：无
  */
-bool getSystemSwitchingChangeStatus(void)
+bool getSystemMachineStateChangeFlag(void)
 {
-	return (systemSwitchingChangeState);
+	return (machineStateChangeFlag);
 }
 
 /*
@@ -64,9 +64,9 @@ bool getSystemSwitchingChangeStatus(void)
  * @函数参数：sta, 待配置的状态值.
  * @返回值：无
  */
-void configSystemSwitchingChangeStatus(bool wdata)
+void configSystemMachineStateChangeFlag(bool wdata)
 {
-	systemSwitchingChangeState = wdata;
+	machineStateChangeFlag = wdata;
 }
 
 /*
@@ -108,11 +108,11 @@ void commReceivedFrameParsing(void)
 					memcpy(&regVolt, &esBuf[3], sizeof(uint16_t));
 					boostOutputVoltageRegulate(regVolt);						/* 调用输出电压调节函数. */
 					
-					retVal = 0;													/* 数据妥收, 应答结果清零. */
+					retVal = 0;
 				}
 				else 
 				{
-					retVal = 0xff;												/* 数据未妥收, 应答结果置位. */
+					retVal = 0xff;
 				}
 			}
 			else if (esBuf[1] == START_STOP_MACHINE_CMD)						/* 收到的是系统开关机命令. */
@@ -121,20 +121,20 @@ void commReceivedFrameParsing(void)
 				
 				if (error == 0)
 				{
-					systemCurSwitchingState = (bool)esBuf[3];					/* 系统开关机状态更新. */
+					systemMachineOpenState = (bool)esBuf[3];					/* 系统开关机状态更新. */
 
-					if (systemCurSwitchingState != systemPrevSwitchingState)
+					if (systemMachineOpenState != prevSystemMachineOpenState)
 					{
-						systemSwitchingChangeState = TRUE;						/* 系统开关机状态有变化标志置位. */
+						machineStateChangeFlag = TRUE;
 
-						systemPrevSwitchingState = systemCurSwitchingState;		/* 系统上次开关机状态被复写. */
+						prevSystemMachineOpenState = systemMachineOpenState;
 					}
 					
-					retVal = 0;													/* 数据妥收, 应答结果清零. */
+					retVal = 0;
 				}
 				else 
 				{
-					retVal = 0xff;												/* 数据未妥收, 应答结果置位. */
+					retVal = 0xff;
 				}
 			}
 			else

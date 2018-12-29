@@ -17,14 +17,6 @@
 
 #define  PFCVS22_CTRL_PORT	(GPIOD)
 #define  PFCVS22_CTRL_PIN	(GPIO_PIN_7)
-
-
-bool getLLCOutputEnableStatus(void);
-void configLLCOutputEnableStatus(bool wdata);
-bool getBoostOutputEnableStatus(void);
-void configBoostOutputEnbaleStatus(bool wdata);
-bool getSystemRelayOutputStatus(void);
-void configSystemRelayOutputStatus(bool wdata);
    
 void ioCtrlInit_LL(void);
 void ioCtrlRelayOpen_LL(void);

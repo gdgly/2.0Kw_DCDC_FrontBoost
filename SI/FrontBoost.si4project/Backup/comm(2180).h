@@ -20,10 +20,10 @@
    
 
    
-bool getSystemCurrentSwitchingStatus(void);
-void configSystemCurrentSwitchingStatus(bool sta);
-bool getSystemSwitchingChangeStatus(void);
-void configSystemSwitchingChangeStatus(bool wdata);
+bool getSystemMachineStatus(void);
+void configSystemMachineStatus(bool sta);
+bool getSystemMachineStateChangeFlag(void);
+void configSystemMachineStateChangeFlag(bool wdata);
 
 void commReceivedFrameParsing(void);
 void commSendSyetemInfo(void);

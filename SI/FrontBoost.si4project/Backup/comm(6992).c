@@ -11,9 +11,9 @@
 
 
 
-static bool systemCurSwitchingState    = FALSE;		/* 系统当前开机状态. FALSE,关机态; TRUE,开机态; */
-static bool systemPrevSwitchingState   = FALSE;		/* 系统前一次的开机状态. */
-static bool systemSwitchingChangeState = FALSE;		/* 系统开关机改变的状态. FALSE,状态无变化; TRUE,状态有变化; */
+static bool systemMachineOpenState 	   = FALSE;		/* 系统开机状态. FALSE,关机态; TRUE,开机态; */
+static bool prevSystemMachineOpenState = FALSE;
+static bool machineStateChangeFlag     = FALSE;
 
 static int8_t transmitOrderCntSemaphore = 0;		/* 串口发送命令帧顺序计数信号量. */
 
@@ -34,9 +34,9 @@ static uint8_t commTimeoutErrorCnt = 0;				/* 串口通信等待应答数据帧�
  * @函数参数：无
  * @返回值：系统当前运行状态值.
  */
-bool getSystemCurrentSwitchingStatus(void)
+bool getSystemMachineStatus(void)
 {
-	return (systemCurSwitchingState);
+	return (systemMachineOpenState);
 }
 
 /*
@@ -44,9 +44,9 @@ bool getSystemCurrentSwitchingStatus(void)
  * @函数参数：sta, 待配置的状态值.
  * @返回值：无
  */
-void configSystemCurrentSwitchingStatus(bool sta)
+void configSystemMachineStatus(bool sta)
 {
-	systemCurSwitchingState = sta;
+	systemMachineOpenState = sta;
 }
 
 /*
@@ -54,9 +54,9 @@ void configSystemCurrentSwitchingStatus(bool sta)
  * @函数参数：sta, 待配置的状态值.
  * @返回值：无
  */
-bool getSystemSwitchingChangeStatus(void)
+bool getSystemMachineStateChangeFlag(void)
 {
-	return (systemSwitchingChangeState);
+	return (machineStateChangeFlag);
 }
 
 /*
@@ -64,9 +64,9 @@ bool getSystemSwitchingChangeStatus(void)
  * @函数参数：sta, 待配置的状态值.
  * @返回值：无
  */
-void configSystemSwitchingChangeStatus(bool wdata)
+void configSystemMachineStateChangeFlag(bool wdata)
 {
-	systemSwitchingChangeState = wdata;
+	machineStateChangeFlag = wdata;
 }
 
 /*
@@ -108,11 +108,11 @@ void commReceivedFrameParsing(void)
 					memcpy(&regVolt, &esBuf[3], sizeof(uint16_t));
 					boostOutputVoltageRegulate(regVolt);						/* 调用输出电压调节函数. */
 					
-					retVal = 0;													/* 数据妥收, 应答结果清零. */
+					retVal = 0;
 				}
 				else 
 				{
-					retVal = 0xff;												/* 数据未妥收, 应答结果置位. */
+					retVal = 0xff;
 				}
 			}
 			else if (esBuf[1] == START_STOP_MACHINE_CMD)						/* 收到的是系统开关机命令. */
@@ -121,20 +121,20 @@ void commReceivedFrameParsing(void)
 				
 				if (error == 0)
 				{
-					systemCurSwitchingState = (bool)esBuf[3];					/* 系统开关机状态更新. */
+					systemMachineOpenState = (bool)esBuf[3];					/* 系统开关机状态更新. */
 
-					if (systemCurSwitchingState != systemPrevSwitchingState)
+					if (systemMachineOpenState != prevSystemMachineOpenState)
 					{
-						systemSwitchingChangeState = TRUE;						/* 系统开关机状态有变化标志置位. */
+						machineStateChangeFlag = TRUE;
 
-						systemPrevSwitchingState = systemCurSwitchingState;		/* 系统上次开关机状态被复写. */
+						prevSystemMachineOpenState = systemMachineOpenState;
 					}
 					
-					retVal = 0;													/* 数据妥收, 应答结果清零. */
+					retVal = 0;
 				}
 				else 
 				{
-					retVal = 0xff;												/* 数据未妥收, 应答结果置位. */
+					retVal = 0xff;
 				}
 			}
 			else
@@ -147,7 +147,7 @@ void commReceivedFrameParsing(void)
 			esBuf[esLen++] = cmd;												/* 命令字节. */
 			esBuf[esLen++] = FRAME_TYPE_RESPOND;								/* 帧类型是应答帧. */
 			esBuf[esLen++] = retVal;											/* 接收结果. */
-			crc = calculateCRC16(esBuf, esLen);
+			crc = crc16(esBuf, esLen);
 			memcpy(&esBuf[esLen], &crc, sizeof(uint16_t));						/* CRC16校验码. */
 			esLen += sizeof(uint16_t);
 			
@@ -173,7 +173,8 @@ void commReceivedFrameParsing(void)
 void commSendSyetemInfo(void)
 {
 	const uint8_t MAX_ERROR_TIME = 3;
-    SystemInfoParaDef_t *pInfoPar;
+    VoltParaDef_t *pVoltPar;
+	TemperatureParaDef_t *pTempPar;
     uint8_t  Buf[25], Len;
     uint8_t  esBuf[15], esLen;
 	uint8_t  txDataBuf[25], txDataLen;
@@ -181,7 +182,8 @@ void commSendSyetemInfo(void)
 	uint8_t  error;
 	uint16_t commStatus;
 	
-	pInfoPar = getSystemInfoParaPtr();
+	pVoltPar = getSystemVoltageParaPtr();
+	pTempPar = getSystemTemperatureParaPtr();
 	
 	if (getSystemInfoReadyFlag() == TRUE)
 	{
@@ -191,10 +193,10 @@ void commSendSyetemInfo(void)
 			esBuf[esLen++] = 10;
 			esBuf[esLen++] = SEND_INPUTVOLT_CMD;
 			esBuf[esLen++] = FRAME_TYPE_SEND;
-			memcpy(&esBuf[esLen], &pInfoPar->inputVolt, sizeof(float));
+			memcpy(&esBuf[esLen], &pVoltPar->inputVolt, sizeof(float));
 			esLen += sizeof(float);
-			esBuf[esLen++] = (uint8_t)pInfoPar->inputSta;
-			calcCrc = calculateCRC16(esBuf, esLen);
+			esBuf[esLen++] = (uint8_t)pVoltPar->inputSta;
+			calcCrc = crc16(esBuf, esLen);
 			memcpy(&esBuf[esLen], &calcCrc, sizeof(uint16_t));
 			esLen += sizeof(uint16_t);
 			
@@ -242,8 +244,6 @@ void commSendSyetemInfo(void)
 					transmitOrderCntSemaphore = -1;	
 				}
 			}
-
-			transmitOrderCntSemaphore = 0;
 			
 			if (Len != 0)														
 			{
@@ -278,37 +278,43 @@ void commSendSyetemInfo(void)
 				}
 				else																/* 收到错误的应答数据帧,通信错误. */
 				{
+					transmitOrderCntSemaphore = 0;
+
 					commRxDataErrorCnt++;
 					if (commRxDataErrorCnt >= MAX_ERROR_TIME)
 					{
 						commRxDataErrorCnt = 0;
-						transmitOrderCntSemaphore = 0;
 						
 						commStatus = getSystemWorkingStatus();
 						commStatus |= (1 << UsartComm_Data_Error);
-						configSystemWorkingStatus(commStatus);
-
-						configSystemInfoReadyFlag(FALSE);
-						adcSampleInputVolt_Init();
-					}						
+						configSystemWorkingStatus(commStatus);						
+					}
+					
+					configSystemInfoReadyFlag(FALSE);								
+					configSystemOutputVoltParaUpdateFlag(FALSE);
+					configSystemTemperatureParaUpdateFlag(FALSE);
 				}
 			}
 			else if (waitRespondTimeoutFlag == TRUE)								/* 等待应答帧超时,通信超时. */
 			{
+				transmitOrderCntSemaphore = 0;
+
 				commTimeoutErrorCnt++;
 				if (commTimeoutErrorCnt >= MAX_ERROR_TIME)
 				{
 					commTimeoutErrorCnt = 0;
-					transmitOrderCntSemaphore = 0;
 					
 					commStatus = getSystemWorkingStatus();
 					commStatus |= (1 << UsartComm_TimeOut_Error);
 					configSystemWorkingStatus(commStatus);
-
-					configSystemInfoReadyFlag(FALSE);
-					adcSampleInputVolt_Init();
-				}				
+				}
+				
+				configSystemInfoReadyFlag(FALSE);									
+				configSystemOutputVoltParaUpdateFlag(FALSE);
+				configSystemTemperatureParaUpdateFlag(FALSE);
 			}
+
+			configSystemInputVoltParaUpdateFlag(FALSE);	
 		}
 		else if (transmitOrderCntSemaphore == 1)									/* 本轮通信需要发送输出电压信息数据. */											
 		{
@@ -316,10 +322,10 @@ void commSendSyetemInfo(void)
 			esBuf[esLen++] = 10;
 			esBuf[esLen++] = SEND_OUTPUTVOLT_CMD;
 			esBuf[esLen++] = FRAME_TYPE_SEND;
-			memcpy(&esBuf[esLen], &pInfoPar->outputVolt, sizeof(float));
+			memcpy(&esBuf[esLen], &pVoltPar->outputVolt, sizeof(float));
 			esLen += sizeof(float);
-			esBuf[esLen++] = (uint8_t)pInfoPar->outputSta;
-			calcCrc = calculateCRC16(esBuf, esLen);
+			esBuf[esLen++] = (uint8_t)pVoltPar->outputSta;
+			calcCrc = crc16(esBuf, esLen);
 			memcpy(&esBuf[esLen], &calcCrc, sizeof(uint16_t));
 			esLen += sizeof(uint16_t);
 			
@@ -367,8 +373,6 @@ void commSendSyetemInfo(void)
 					transmitOrderCntSemaphore = -1;
 				}
 			}
-
-			transmitOrderCntSemaphore = 1;
 			
 			if (Len != 0)														
 			{
@@ -399,41 +403,47 @@ void commSendSyetemInfo(void)
 					configSystemWorkingStatus(commStatus);
 
 					commRxDataErrorCnt  = 0;
-					commTimeoutErrorCnt = 0;								
+					commTimeoutErrorCnt = 0;
 				}
 				else																/* 收到错误的应答数据帧,通信错误. */
 				{
+					transmitOrderCntSemaphore = 0;
+
 					commRxDataErrorCnt++;
 					if (commRxDataErrorCnt >= MAX_ERROR_TIME)
 					{
 						commRxDataErrorCnt = 0;
-						transmitOrderCntSemaphore = 0;
 						
 						commStatus = getSystemWorkingStatus();
 						commStatus |= (1 << UsartComm_Data_Error);
-						configSystemWorkingStatus(commStatus);
+						configSystemWorkingStatus(commStatus);						
+					}
 
-						configSystemInfoReadyFlag(FALSE);
-						adcSampleInputVolt_Init();
-					}							
+					configSystemInfoReadyFlag(FALSE);								
+					configSystemInputVoltParaUpdateFlag(FALSE);
+					configSystemTemperatureParaUpdateFlag(FALSE);
 				}
 			}
 			else if (waitRespondTimeoutFlag == TRUE)								/* 等待应答帧超时,通信超时. */
 			{
+				transmitOrderCntSemaphore = 0;
+
 				commTimeoutErrorCnt++;
 				if (commTimeoutErrorCnt >= MAX_ERROR_TIME)
 				{
 					commTimeoutErrorCnt = 0;
-					transmitOrderCntSemaphore = 0;
 					
 					commStatus = getSystemWorkingStatus();
 					commStatus |= (1 << UsartComm_TimeOut_Error);
 					configSystemWorkingStatus(commStatus);
+				}
 
-					configSystemInfoReadyFlag(FALSE);
-					adcSampleInputVolt_Init();
-				}									
+				configSystemInfoReadyFlag(FALSE);									
+				configSystemInputVoltParaUpdateFlag(FALSE);
+				configSystemTemperatureParaUpdateFlag(FALSE);
 			}
+			
+			configSystemOutputVoltParaUpdateFlag(FALSE);	
 		}
 		else if (transmitOrderCntSemaphore == 2)									/* 本轮通信需要发送温度信息数据. */				
 		{
@@ -441,9 +451,9 @@ void commSendSyetemInfo(void)
 			esBuf[esLen++] = 6;
 			esBuf[esLen++] = SEND_TEMPERATURE_CMD;
 			esBuf[esLen++] = FRAME_TYPE_SEND;
-			memcpy(&esBuf[esLen], &pInfoPar->tempVal, sizeof(int8_t));
+			memcpy(&esBuf[esLen], &pTempPar->val, sizeof(int8_t));
 			esLen += sizeof(int8_t);
-			calcCrc = calculateCRC16(esBuf, esLen);
+			calcCrc = crc16(esBuf, esLen);
 			memcpy(&esBuf[esLen], &calcCrc, sizeof(uint16_t));
 			esLen += sizeof(uint16_t);
 			
@@ -491,8 +501,6 @@ void commSendSyetemInfo(void)
 					transmitOrderCntSemaphore = -1;
 				}
 			}
-
-			transmitOrderCntSemaphore = 2;
 			
 			if (Len != 0)														
 			{
@@ -526,41 +534,48 @@ void commSendSyetemInfo(void)
 					commTimeoutErrorCnt = 0;
 
 					configSystemInfoReadyFlag(FALSE);
-					adcSampleInputVolt_Init();
+					configSystemInputVoltParaUpdateFlag(FALSE);
+					configSystemOutputVoltParaUpdateFlag(FALSE);
 				}
 				else																/* 收到错误的应答数据帧,通信错误. */
 				{
+					transmitOrderCntSemaphore = 0;
+
 					commRxDataErrorCnt++;
 					if (commRxDataErrorCnt >= MAX_ERROR_TIME)
 					{
 						commRxDataErrorCnt = 0;
-						transmitOrderCntSemaphore = 0;
 						
 						commStatus = getSystemWorkingStatus();
 						commStatus |= (1 << UsartComm_Data_Error);
-						configSystemWorkingStatus(commStatus);	
+						configSystemWorkingStatus(commStatus);						
+					}
 
-						configSystemInfoReadyFlag(FALSE);
-						adcSampleInputVolt_Init();
-					}		
+					configSystemInfoReadyFlag(FALSE);								
+					configSystemInputVoltParaUpdateFlag(FALSE);
+					configSystemOutputVoltParaUpdateFlag(FALSE);
 				}
 			}
 			else if (waitRespondTimeoutFlag == TRUE)								/* 等待应答帧超时,通信超时. */
 			{
+				transmitOrderCntSemaphore = 0;
+
 				commTimeoutErrorCnt++;
 				if (commTimeoutErrorCnt >= MAX_ERROR_TIME)
 				{
 					commTimeoutErrorCnt = 0;
-					transmitOrderCntSemaphore = 0;
 					
 					commStatus = getSystemWorkingStatus();
 					commStatus |= (1 << UsartComm_TimeOut_Error);
 					configSystemWorkingStatus(commStatus);
+				}
 
-					configSystemInfoReadyFlag(FALSE);
-					adcSampleInputVolt_Init();
-				}	
+				configSystemInfoReadyFlag(FALSE);									
+				configSystemInputVoltParaUpdateFlag(FALSE);
+				configSystemOutputVoltParaUpdateFlag(FALSE);
 			}
+
+			configSystemTemperatureParaUpdateFlag(FALSE);		
 		}
 	}
 }

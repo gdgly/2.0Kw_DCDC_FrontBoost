@@ -3,6 +3,7 @@
 #include "tim4tick.h"
 
 static volatile uint32_t systemTimTick = 0UL;
+//static volatile uint32_t uwTick = 0UL;
 
 /*
  * @函数功能：系统"滴答"定时器初始化.中断周期:1ms
@@ -23,6 +24,32 @@ void systemTimTickInit_LL(void)
     TIM4_SetCounter(0);
     TIM4_Cmd(ENABLE);
 }
+
+#if 0
+/*
+ * @函数功能：系统Tick计数器全局变量递增.
+ * @函数参数：无
+ * @返回值：无
+ */
+void uwTick_Increment(void)
+{
+    uwTick += 1;
+    if (uwTick >= 0xffffffff)
+    {
+        uwTick = 0;
+    }
+}
+
+/*
+ * @函数功能：获取系统Tick计数器全局变量当前值.
+ * @函数参数：无
+ * @返回值：无
+ */
+uint32_t HAL_GetTick(void)
+{
+    return (uwTick);
+}
+#endif
 
 /*
  * @函数功能：判断当前TimTick是否为非0值.若是,递减.

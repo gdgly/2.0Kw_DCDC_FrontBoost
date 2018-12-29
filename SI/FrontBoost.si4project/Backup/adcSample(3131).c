@@ -245,13 +245,15 @@ static float calculateBoostOutputVoltage(uint16_t adcData)
     
     Vsp = (adcRawdata / 1024.0) * 3.0;                      /* Vsp = (ADC Rawdata / 2^10) * Vref */
 
-    status = getLLCOutputEnableStatus();					
+//	status = getSystemMachineStatus();
+    
+    status = getNcpChipStatus();
 	
-	if (status == TRUE)										/* boost输出是开启状态. */
+	if (status == TRUE)										/* 开机状态. */
 	{
-		Vout = Vsp * 308.0;                                 /* Vout = Vsp * k */
+		Vout = Vsp * 326.0;                                 /* Vout = Vsp * k */
 	}
-	else													/* boost输出是关闭状态. */
+	else													/* 停机状态. */
 	{
 		Vout = Vsp * 662.0;                                 /* Vout = Vsp * k */
 	}
@@ -320,6 +322,8 @@ static VoltStatusDef_t boostInputVoltageCompare(float volt)
 		status = ReductionPower;										/* 输入电压降额,降功率输出. */
                    
         ioCtrlRelayOpen_LL();
+        
+//        ioCtrlAnologEnable_LL();
     }
     else if (((volt > 250.0) && (fabs(volt - 250.0) > EPSINON)) && \
              ((volt < 500.0) && (fabs(volt - 500.0) > EPSINON)))        /* 输入电压大于250V小于500V. */
@@ -327,6 +331,8 @@ static VoltStatusDef_t boostInputVoltageCompare(float volt)
 		status = FullPower;                                 			/* 输入电压正常,满功率输出. */
                            
         ioCtrlRelayOpen_LL();
+        
+//        ioCtrlAnologEnable_LL();
     }
     else if ((volt > 500.0) && (fabs(volt - 500.0) > EPSINON))          /* 输入电压大于500V. */
     {

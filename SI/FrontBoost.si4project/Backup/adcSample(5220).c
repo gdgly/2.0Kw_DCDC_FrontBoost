@@ -5,7 +5,6 @@
 #include "ioctrl.h"
 #include "tim4tick.h"
 #include "comm.h"
-#include "ioctrl.h"
 
 
 /* NTC温度传感器温度-阻值对应关系表. */
@@ -38,16 +37,19 @@ static volatile bool convertCompleteMutex = TRUE;	/* 当前通道转换完成互
 
 
 /* 系统当前输入以及输出电压. */
-static SystemInfoParaDef_t systemInfo = 
+static VoltParaDef_t boostPara = 
 {
     .inputSta     = UnderVoltage,
     .inputVolt    = 0.0,
 	
     .outputSta    = UnderVoltage,
     .outputVolt   = 0.0,
+};
 
-	.tempSta      = LowTempAlarm,
-	.tempVal      = 0,
+/* 系统当前温度值. */
+static TemperatureParaDef_t systemTempPara = 
+{
+	.val = -40,
 };
 
 /* 系统电压和温度等参数信息就绪标志位. FALSE,未就绪; TRUE,就绪; */
@@ -145,9 +147,19 @@ void adcBoostOutputVoltChannelInit_LL(void)
  * @函数参数：
  * @返回值：
  */
-SystemInfoParaDef_t* getSystemInfoParaPtr(void)
+VoltParaDef_t* getSystemVoltageParaPtr(void)
 {
-	return (&systemInfo);
+	return (&boostPara);
+}
+
+/*
+ * @函数功能：
+ * @函数参数：
+ * @返回值：
+ */
+TemperatureParaDef_t* getSystemTemperatureParaPtr(void)
+{
+	return (&systemTempPara);
 }
 
 /*
@@ -245,15 +257,15 @@ static float calculateBoostOutputVoltage(uint16_t adcData)
     
     Vsp = (adcRawdata / 1024.0) * 3.0;                      /* Vsp = (ADC Rawdata / 2^10) * Vref */
 
-    status = getLLCOutputEnableStatus();					
+	status = getSystemMachineStatus();
 	
-	if (status == TRUE)										/* boost输出是开启状态. */
-	{
-		Vout = Vsp * 308.0;                                 /* Vout = Vsp * k */
-	}
-	else													/* boost输出是关闭状态. */
+	if (status == TRUE)										/* 开机状态. */
 	{
 		Vout = Vsp * 662.0;                                 /* Vout = Vsp * k */
+	}
+	else													/* 停机状态. */
+	{
+		Vout = Vsp * 326.0;                                 /* Vout = Vsp * k */
 	}
     
     return (Vout);
@@ -488,8 +500,8 @@ void adcSampleGetResult(void)
         {
         	sampleObjectMarker = -1;                                            /* 采集对象标识器置为无效值. */ 
 
-			systemInfo.inputVolt = calculateBoostInputVoltage(result);
-			systemInfo.inputSta  = boostInputVoltageCompare(systemInfo.inputVolt);
+			boostPara.inputVolt = calculateBoostInputVoltage(result);
+			boostPara.inputSta  = boostInputVoltageCompare(boostPara.inputVolt);
 
 			adcSampleOutputVolt_Init();
         }
@@ -497,8 +509,8 @@ void adcSampleGetResult(void)
         {
         	sampleObjectMarker = -1;                                            /* 采集对象标识器置为无效值. */ 
 			
-			systemInfo.outputVolt = calculateBoostOutputVoltage(result);
-			systemInfo.outputSta  = boostOutputVoltageCompare(systemInfo.outputVolt);
+			boostPara.outputVolt = calculateBoostOutputVoltage(result);
+			boostPara.outputSta  = boostOutputVoltageCompare(boostPara.outputVolt);
 
 			adcSampleSystemTemperature_Init();
         }
@@ -506,7 +518,7 @@ void adcSampleGetResult(void)
         {
         	sampleObjectMarker = -1;                                            /* 采集对象标识器置为无效值. */ 
 			
-			systemInfo.tempVal = calculateSystemTemperature(result);
+			systemTempPara.val = calculateSystemTemperature(result);
                 
 			systemInfoReadyFlag = TRUE;											/* 系统参数信息"就绪"标志置位. */
         }                                          

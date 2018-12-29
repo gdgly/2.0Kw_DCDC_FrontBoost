@@ -56,16 +56,16 @@ void main(void)
     tim1PwmControlInit_LL();
     tim2ScanInit_LL();
 	tim3TimeoutFuncConfig_LL();
-    adcSampleInputVolt_Init();
+    adcBoostInputVoltChannelInit_LL();
     
     enableInterrupts();
     
 	while (1)
 	{
         adcSampleGetResult();
-        commSendSyetemInfo();
-        commReceivedFrameParsing();
-		ioCtrlProcessing();
+//        commSendSyetemInfo();
+//        commReceivedFrameParsing();
+//		ioCtrlProcessing();
     }
 }
 
